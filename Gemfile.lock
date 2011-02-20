@@ -7,6 +7,7 @@ GEM
   remote: http://rubygems.org/
   specs:
     Saikuro (1.1.0)
+    ZenTest (4.5.0)
     abstract (1.0.0)
     activesupport (3.0.4)
     arrayfields (4.7.4)
@@ -88,6 +89,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  ZenTest
   bluecloth
   metric_fu
   rspec (> 2.0)
