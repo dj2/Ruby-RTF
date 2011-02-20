@@ -1,7 +1,8 @@
 .rvmrc
-.bundle
-.yardoc
+.bundle/
+.yardoc/
 
-doc
-tmp
-data
+doc/
+tmp/
+data/
+pkg/
