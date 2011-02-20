@@ -1,5 +1,7 @@
 .rvmrc
 .bundle
+.yardoc
 
+doc
 tmp
 data
