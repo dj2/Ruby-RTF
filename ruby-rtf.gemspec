@@ -1,3 +1,4 @@
+$: << "./lib"
 require 'ruby-rtf/version'
 
 Gem::Specification.new do |s|
