@@ -4,10 +4,12 @@ Bundler::GemHelper.install_tasks
 require 'yard'
 require 'rspec/core/rake_task'
 
+require 'metric_fu'
+
 task :default => [:spec]
 
 desc "run spec tests"
-RSPec::Core::RakeTask.new('spec') do |t|
+RSpec::Core::RakeTask.new('spec') do |t|
   t.pattern = 'spec/**/*_spec.rb'
 end
 
