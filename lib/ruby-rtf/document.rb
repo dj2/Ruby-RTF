@@ -1,7 +1,7 @@
 module RubyRTF
   # Represents the entire RTF document
   class Document
-    # Accessor for the documents font table
+    # @return [Hash] The font table
     attr_reader :font_table
 
     def initialize

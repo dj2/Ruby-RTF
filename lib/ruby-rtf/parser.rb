@@ -1,11 +1,11 @@
 module RubyRTF
-  # Handles the parsing of RTF content into an RTF::Document
+  # Handles the parsing of RTF content into an RubyRTF::Document
   class Parser
     # Parses a given string into an RubyRTF::Document
     #
     # @param src [String] The document to parse
-    # @return [RTF::Document] The RTF document representing the provided @doc
-    # @raise [RTF::InvalidDocument] Raised if the document is not valid RTF
+    # @return [RubyRTF::Document] The RTF document representing the provided @doc
+    # @raise [RubyRTF::InvalidDocument] Raised if the document is not valid RTF
     def self.parse(src)
       raise RubyRTF::InvalidDocument.new("Opening \\rtf1 missing") unless src =~ /\{\\rtf1/
 
@@ -37,7 +37,7 @@ module RubyRTF
     #
     # @param src [String] The fragment to parse
     # @param current_pos [Integer] The position in string the control starts at (after the \)
-    # @return [name, val, current_pos] The name, optional control value and the new current position
+    # @return [String, String|Integer, Integer] The name, optional control value and the new current position
     #
     # @api private
     def self.parse_control(src, current_pos = 0)
