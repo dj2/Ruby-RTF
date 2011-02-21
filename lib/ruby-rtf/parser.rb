@@ -61,7 +61,7 @@ module RubyRTF
         ctrl = :hex
         val = contents[1..-1].hex.chr
       else
-        m = contents.match(/(['a-z]+)(\-?\d+)?\*?/)
+        m = contents.match(/([\*a-z]+)(\-?\d+)?\*?/)
         ctrl = m[1].to_sym
         val = m[2].to_i unless $2.nil?
       end
@@ -85,6 +85,9 @@ module RubyRTF
     def self.handle_control(name, val, src, current_pos, doc)
       case(name)
       when :fonttbl then parse_font_table(src, current_pos, doc)
+      when :deff then doc.default_font = val.to_s
+
+      when *[:ansi, :mac, :pc, :pca] then doc.character_set = name
       end
     end
 
@@ -101,37 +104,63 @@ module RubyRTF
 
       font_num = nil
       font = nil
-      name = nil
+
+      in_extra = nil
 
       while (group != 0)
         case(src[current_pos])
         when '{' then
-          font = RubyRTF::Font.new
-          name = ''
+          font = RubyRTF::Font.new if group == 1
+          in_extra = nil
+
           group += 1
+
         when '}' then
-          font.name = name.gsub(/;$/, '')
-          doc.font_table[font_num] = font
           group -= 1
+
+          if group == 1
+            font.cleanup_names
+            doc.font_table[font_num] = font
+          end
+
+          in_extra = nil
+
+          break if group == 0
+
         when '\\' then
           ctrl, val, current_pos = parse_control(src, current_pos)
 
-          if ctrl == :f
-            font_num = val.to_s
+          case(ctrl)
+          when :f then font_num = val
+          when :fprq then font.pitch = val
+          when :fcharset then font.character_set = val
+          when *[:flomajor, :fhimajor, :fdbmajor, :fbimajor,
+                 :flominor, :fhiminor, :fdbminor, :fbiminor] then
+            font.theme = ctrl.to_s[1..-1].to_sym
+
+          when *[:falt, :fname, :panose] then in_extra = ctrl
           else
-            font.family_command = ctrl.to_s[1..-1].to_sym
+            cmd = ctrl.to_s[1..-1].to_sym
+            if RubyRTF::Font::FAMILIES.include?(cmd)
+              font.family_command = cmd
+            end
           end
 
           # need to next as parse_control will leave current_pos at the
           # next character already so current_pos += 1 below would move us too far
           next
         else
-          name << src[current_pos]
+          case(in_extra)
+          when :falt then font.alternate_name << src[current_pos]
+          when :panose then font.panose << src[current_pos]
+          when :fname then font.non_tagged_name << src[current_pos]
+          when nil then font.name << src[current_pos]
+          end
         end
         current_pos += 1
       end
 
-      current_pos - 1
+      current_pos
     end
   end
 end

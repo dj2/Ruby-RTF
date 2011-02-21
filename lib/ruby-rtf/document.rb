@@ -4,8 +4,17 @@ module RubyRTF
     # @return [Hash] The font table
     attr_reader :font_table
 
+    # @return [Integer] The default font number for the document
+    attr_accessor :default_font
+
+    # @return [String] The characgter set for the document (:ansi, :pc, :pca, :mac)
+    attr_accessor :character_set
+
+    # Creates a new document
+    #
+    # @return [RubyRTF::Document] The new document
     def initialize
-      @font_table = {}
+      @font_table = []
     end
 
     # Convert RubyRTF::Document to a string

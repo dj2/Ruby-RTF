@@ -12,7 +12,11 @@ describe RubyRTF::Parser do
     doc.is_a?(RubyRTF::Document).should be_true
   end
 
-  it 'parses a default font (\deffN)'
+  it 'parses a default font (\deffN)' do
+    src = '{\rtf1\ansi\deff10 {\fonttbl {\f10 Times New Roman;}}\f \fs60 Hello, World!}'
+    doc = RubyRTF::Parser.parse(src)
+    doc.default_font.should == '10'
+  end
 
   context 'invalid document' do
     it 'raises exception if \rtf is missing' do
@@ -87,7 +91,11 @@ describe RubyRTF::Parser do
 
   context 'character set' do
     %w(ansi mac pc pca).each do |type|
-      it "accepts #{type}"
+      it "accepts #{type}" do
+        src = "{\\rtf1\\#{type}\\deff0 {\\fonttbl {\\f0 Times New Roman;}}\\f \\fs60 Hello, World!}"
+        doc = RubyRTF::Parser.parse(src)
+        doc.character_set.should == type.to_sym
+      end
     end
   end
 
@@ -96,7 +104,7 @@ describe RubyRTF::Parser do
       src = '{\rtf1{\fonttbl{\f0\froman Times;}{\f1\fnil Arial;}}}'
       doc = RubyRTF::Parser.parse(src)
 
-      font = doc.font_table['0']
+      font = doc.font_table[0]
       font.family_command.should == :roman
       font.name.should == 'Times'
     end
@@ -110,17 +118,91 @@ describe RubyRTF::Parser do
       RubyRTF::Parser.parse_font_table(src, 0, doc)
       tbl = doc.font_table
 
-      tbl.keys.length.should == 2
-      tbl['0'].family_command.should == :roman
-      tbl['0'].name.should == 'Times New Roman'
+      tbl.length.should == 2
+      tbl[0].family_command.should == :roman
+      tbl[0].name.should == 'Times New Roman'
 
-      tbl['1'].family_command.should == :nil
-      tbl['1'].name.should == 'Arial'
+      tbl[1].family_command.should == :nil
+      tbl[1].name.should == 'Arial'
     end
 
-    it 'the family command is optional'
-    it 'does not require the numbering to be incremental'
-    it 'sets current pos to the closing }'
+    it 'the family command is optional' do
+      src = '{\f0 Times New Roman;}}}'
+      RubyRTF::Parser.parse_font_table(src, 0, doc)
+      tbl = doc.font_table
+      tbl[0].family_command.should == :nil
+      tbl[0].name.should == 'Times New Roman'
+    end
+
+    it 'does not require the numbering to be incremental' do
+      src = '{\f77\froman Times New Roman;}{\f3\fnil Arial;}}}'
+      RubyRTF::Parser.parse_font_table(src, 0, doc)
+      tbl = doc.font_table
+
+      tbl[77].family_command.should == :roman
+      tbl[77].name.should == 'Times New Roman'
+
+      tbl[3].family_command.should == :nil
+      tbl[3].name.should == 'Arial'
+    end
+
+    it 'accepts the \falt command' do
+      src = '{\f0\froman Times New Roman{\*\falt Courier New};}}'
+      RubyRTF::Parser.parse_font_table(src, 0, doc)
+      tbl = doc.font_table
+      tbl[0].name.should == 'Times New Roman'
+      tbl[0].alternate_name.should == 'Courier New'
+    end
+
+    it 'sets current pos to the closing }' do
+      src = '{\f0\froman Times New Roman{\*\falt Courier New};}}'
+      RubyRTF::Parser.parse_font_table(src, 0, doc).should == (src.length - 1)
+    end
+
+    it 'accepts the panose command' do
+      src = '{\f0\froman\fcharset0\fprq2{\*\panose 02020603050405020304}Times New Roman{\*\falt Courier New};}}'
+      RubyRTF::Parser.parse_font_table(src, 0, doc)
+      tbl = doc.font_table
+      tbl[0].panose.should == '02020603050405020304'
+      tbl[0].name.should == 'Times New Roman'
+      tbl[0].alternate_name.should == 'Courier New'
+    end
+
+    %w(flomajor fhimajor fdbmajor fbimajor flominor fhiminor fdbminor fbiminor).each do |type|
+      it "handles theme font type: #{type}" do
+        src = "{\\f0\\#{type} Times New Roman;}}"
+        RubyRTF::Parser.parse_font_table(src, 0, doc)
+        tbl = doc.font_table
+        tbl[0].name.should == 'Times New Roman'
+        tbl[0].theme.should == type[1..-1].to_sym
+      end
+    end
+
+    [[0, :default], [1, :fixed], [2, :variable]].each do |pitch|
+      it 'parses pitch information' do
+        src = "{\\f0\\fprq#{pitch.first} Times New Roman;}}"
+        RubyRTF::Parser.parse_font_table(src, 0, doc)
+        tbl = doc.font_table
+        tbl[0].name.should == 'Times New Roman'
+        tbl[0].pitch.should == pitch.last
+      end
+    end
+
+    it 'parses the non-tagged font name' do
+      src = '{\f0{\*\fname Arial;}Times New Roman;}}'
+      RubyRTF::Parser.parse_font_table(src, 0, doc)
+      tbl = doc.font_table
+      tbl[0].name.should == 'Times New Roman'
+      tbl[0].non_tagged_name.should == 'Arial'
+    end
+
+    it 'parses the charset' do
+      src = '{\f0\fcharset87 Times New Roman;}}'
+      RubyRTF::Parser.parse_font_table(src, 0, doc)
+      tbl = doc.font_table
+      tbl[0].name.should == 'Times New Roman'
+      tbl[0].character_set.should == 87
+    end
   end
 
   context 'colour table' do
