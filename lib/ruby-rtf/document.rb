@@ -31,8 +31,14 @@ module RubyRTF
       str = "RTF Document:\n" +
             "  Font Table:\n"
 
-      font_table.keys.sort.each do |key|
-        str << "    #{key}: #{font_table[key]}\n"
+      font_table.each_with_index do |font, idx|
+        next if font.nil?
+        str << "    #{idx}: #{font}\n"
+      end
+
+      str << "  Colour Table:\n"
+      colour_table.each_with_index do |colour, idx|
+        str << "    #{idx}: #{colour}\n"
       end
 
       str
