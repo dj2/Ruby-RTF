@@ -1,0 +1,7 @@
+#!/usr/bin/env ruby
+
+require 'ruby-rtf'
+
+doc = RubyRTF::Parser.parse(File.open(ARGV[0]).read)
+
+puts doc
