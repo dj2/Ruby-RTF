@@ -22,10 +22,11 @@ module RubyRTF
         case(char)
         when '\\' then
           name, val, current_pos = parse_control(src, current_pos)
-          handle_control(name, val, src, current_pos, doc)
+          current_pos = handle_control(name, val, src, current_pos, doc)
 
         when '{' then group_level += 1
         when '}' then group_level -= 1
+        when *["\r", "\n"] then ;
         end
       end
 
@@ -54,7 +55,6 @@ module RubyRTF
         return [:hex, val, current_pos]
       end
 
-      current_pos += 1
       while (true)
         break if current_pos >= max_len
         break if [' ', '\\', '{', '}', "\r", "\n", ';'].include?(src[current_pos])
@@ -85,12 +85,13 @@ module RubyRTF
     # @api private
     def self.handle_control(name, val, src, current_pos, doc)
       case(name)
-      when :fonttbl then parse_font_table(src, current_pos, doc)
-      when :colortbl then parse_colour_table(src, current_pos, doc)
+      when :fonttbl then current_pos = parse_font_table(src, current_pos, doc)
+      when :colortbl then current_pos = parse_colour_table(src, current_pos, doc)
       when :deff then doc.default_font = val
 
       when *[:ansi, :mac, :pc, :pca] then doc.character_set = name
       end
+      current_pos
     end
 
     # Parses the font table group
@@ -130,7 +131,7 @@ module RubyRTF
           break if group == 0
 
         when '\\' then
-          ctrl, val, current_pos = parse_control(src, current_pos)
+          ctrl, val, current_pos = parse_control(src, current_pos + 1)
 
           case(ctrl)
           when :f then font_num = val
@@ -189,7 +190,7 @@ module RubyRTF
       while (true)
         case(src[current_pos])
         when '\\' then
-          ctrl, val, current_pos = parse_control(src, current_pos)
+          ctrl, val, current_pos = parse_control(src, current_pos + 1)
 
           case(ctrl)
           when :red then colour.red = val
