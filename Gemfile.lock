@@ -7,7 +7,6 @@ GEM
   remote: http://rubygems.org/
   specs:
     Saikuro (1.1.0)
-    ZenTest (4.5.0)
     abstract (1.0.0)
     activesupport (3.0.4)
     arrayfields (4.7.4)
@@ -37,6 +36,9 @@ GEM
     hoe (2.9.1)
       rake (>= 0.8.7)
     i18n (0.5.0)
+    infinity_test (1.0.2)
+      notifiers (>= 1.1.0)
+      watchr (>= 0.7)
     json_pure (1.5.1)
     main (4.4.0)
       arrayfields (>= 4.7.4)
@@ -52,6 +54,7 @@ GEM
       rcov (>= 0.8.3.3)
       reek (>= 1.2.6)
       roodi (>= 2.1.0)
+    notifiers (1.1.0)
     rails_best_practices (0.7.0)
       activesupport
       colored (~> 1.2)
@@ -83,14 +86,15 @@ GEM
     ruby_parser (2.0.6)
       sexp_processor (~> 3.0)
     sexp_processor (3.0.5)
+    watchr (0.7)
     yard (0.6.4)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
-  ZenTest
   bluecloth
+  infinity_test
   metric_fu
   rspec (> 2.0)
   ruby-rtf!

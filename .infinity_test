@@ -1,0 +1,26 @@
+infinity_test do
+  notifications :growl do
+    show_images :mode => :hands
+  end
+
+  use :test_framework => :rspec
+
+  before_run { clear :terminal }
+
+  heuristics do
+    add('^spec/(.*)_spec.rb') do |file|
+      run :test_for => file
+    end
+    add('^spec/spec_helper.rb') do |file|
+      run :all => :tests
+    end
+    add('^lib/ruby-rtf.rb') do |file|
+      run :all => :tests
+    end
+    add('^lib/(.*)\.rb') do |file|
+      p file
+      p file[1].split('/').last
+      run :test_for => file[1].split('/').last
+    end
+  end
+end
