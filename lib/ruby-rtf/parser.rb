@@ -13,6 +13,7 @@ module RubyRTF
 
       current_pos = 0
       len = src.length
+      txt = ''
 
       group_level = 0
       while (current_pos < len)
@@ -27,6 +28,7 @@ module RubyRTF
         when '{' then group_level += 1
         when '}' then group_level -= 1
         when *["\r", "\n"] then ;
+        else txt << char
         end
       end
 
@@ -85,14 +87,17 @@ module RubyRTF
     # @api private
     def self.handle_control(name, val, src, current_pos, doc)
       case(name)
+      when :rtf then ;
+      when :deff then doc.default_font = val
+
       when :fonttbl then current_pos = parse_font_table(src, current_pos, doc)
       when :colortbl then current_pos = parse_colour_table(src, current_pos, doc)
       when :stylesheet then current_pos = parse_stylesheet(src, current_pos, doc)
-      when :* then current_pos = parse_skip(src, current_pos, doc)
       when :info  then current_pos = parse_info(src, current_pos, doc)
-      when :deff then doc.default_font = val
+      when :* then current_pos = parse_skip(src, current_pos, doc)
 
       when *[:ansi, :mac, :pc, :pca] then doc.character_set = name
+      else puts "Unknown control #{name} with #{val} at #{current_pos}"
       end
       current_pos
     end
