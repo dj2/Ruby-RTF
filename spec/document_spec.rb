@@ -8,11 +8,31 @@ describe RubyRTF::Document do
     table.should_not be_nil
   end
 
-  it 'provides a colour table'
+  context 'colour table' do
+    it 'provides a colour table' do
+      doc = RubyRTF::Document.new
+      tbl = nil
+      lambda { tbl = doc.colour_table }.should_not raise_error
+      tbl.should_not be_nil
+    end
+
+    it 'provdies access as color table' do
+      doc = RubyRTF::Document.new
+      tbl = nil
+      lambda { tbl = doc.color_table }.should_not raise_error
+      tbl.should == doc.colour_table
+    end
+  end
+
   it 'provides a stylesheet'
 
   context 'defaults to' do
-    it 'character set ansi'
-    it 'font 0'
+    it 'character set ansi' do
+      RubyRTF::Document.new.character_set.should == :ansi
+    end
+
+    it 'font 0' do
+      RubyRTF::Document.new.default_font.should == 0
+    end
   end
 end

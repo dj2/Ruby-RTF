@@ -50,7 +50,7 @@ module RubyRTF
       current_pos += 1
       while (true)
         break if current_pos >= max_len
-        break if [' ', '\\', '{', '}', "\r", "\n"].include?(src[current_pos])
+        break if [' ', '\\', '{', '}', "\r", "\n", ';'].include?(src[current_pos])
 
         current_pos += 1
       end
@@ -85,7 +85,8 @@ module RubyRTF
     def self.handle_control(name, val, src, current_pos, doc)
       case(name)
       when :fonttbl then parse_font_table(src, current_pos, doc)
-      when :deff then doc.default_font = val.to_s
+      when :colortbl then parse_colour_table(src, current_pos, doc)
+      when :deff then doc.default_font = val
 
       when *[:ansi, :mac, :pc, :pca] then doc.character_set = name
       end
@@ -158,6 +159,57 @@ module RubyRTF
           end
         end
         current_pos += 1
+      end
+
+      current_pos
+    end
+
+    # Parses the colour table group
+    #
+    # @param src [String] The source document
+    # @param current_pos [Integer] The starting position
+    # @param doc [RubyRTF::Document] The document
+    # @return [Integer] The new current position
+    #
+    # @api private
+    def self.parse_colour_table(src, current_pos, doc)
+      if src[current_pos] == ';'
+        colour = RubyRTF::Colour.new
+        colour.use_default = true
+
+        doc.colour_table << colour
+
+        current_pos += 1
+      end
+
+      colour = RubyRTF::Colour.new
+
+      while (true)
+        case(src[current_pos])
+        when '\\' then
+          ctrl, val, current_pos = parse_control(src, current_pos)
+
+          case(ctrl)
+          when :red then colour.red = val
+          when :green then colour.green = val
+          when :blue then colour.blue = val
+          when :ctint then colour.tint = val
+          when :cshade then colour.shade = val
+          when *[:cmaindarkone, :cmainlightone, :cmaindarktwo, :cmainlighttwo, :caccentone,
+                 :caccenttwo, :caccentthree, :caccentfour, :caccentfive, :caccentsix,
+                 :chyperlink, :cfollowedhyperlink, :cbackgroundone, :ctextone,
+                 :cbackgroundtwo, :ctexttwo] then
+            colour.theme = ctrl.to_s[1..-1].to_sym
+          end
+
+        when ';' then
+          doc.colour_table << colour
+
+          colour = RubyRTF::Colour.new
+          current_pos += 1
+
+        when '}' then break
+        end
       end
 
       current_pos
