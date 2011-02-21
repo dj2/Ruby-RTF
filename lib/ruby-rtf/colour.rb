@@ -40,6 +40,7 @@ module RubyRTF
     #
     # @return [String] The string representation of the colour
     def to_s
+      return "default" if use_default?
       "[#{red}, #{green}, #{blue}]"
     end
   end
