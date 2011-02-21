@@ -151,6 +151,7 @@ module RubyRTF
           # need to next as parse_control will leave current_pos at the
           # next character already so current_pos += 1 below would move us too far
           next
+        when *["\r", "\n"] then ;
         else
           case(in_extra)
           when :falt then font.alternate_name << src[current_pos]

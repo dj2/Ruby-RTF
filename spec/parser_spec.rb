@@ -124,6 +124,19 @@ describe RubyRTF::Parser do
         tbl[1].name.should == 'Arial'
       end
 
+      it 'handles \r and \n in the font table' do
+        src = "{\\f0\\froman Times New Roman;}\r{\\f1\\fnil Arial;}\n}}"
+        RubyRTF::Parser.parse_font_table(src, 0, doc)
+        tbl = doc.font_table
+
+        tbl.length.should == 2
+        tbl[0].family_command.should == :roman
+        tbl[0].name.should == 'Times New Roman'
+
+        tbl[1].family_command.should == :nil
+        tbl[1].name.should == 'Arial'
+      end
+
       it 'the family command is optional' do
         src = '{\f0 Times New Roman;}}}'
         RubyRTF::Parser.parse_font_table(src, 0, doc)
