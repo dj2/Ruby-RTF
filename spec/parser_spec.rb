@@ -62,6 +62,13 @@ describe RubyRTF::Parser do
       RubyRTF::Parser.parse_control("'7e")[0, 2].should == [:hex, '~']
     end
 
+    it 'parses a hex control with a string after it' do
+      ctrl, val, current_pos = RubyRTF::Parser.parse_control("'7e25")
+      ctrl.should == :hex
+      val.should == '~'
+      current_pos.should == 3
+    end
+
     [' ', '{', '}', '\\', "\r", "\n"].each do |stop|
       it "stops at a #{stop}" do
         RubyRTF::Parser.parse_control("rtf#{stop}test")[0, 2].should == [:rtf, nil]

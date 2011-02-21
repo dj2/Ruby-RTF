@@ -47,6 +47,13 @@ module RubyRTF
       max_len = src.length
       start = current_pos
 
+      # handle hex special
+      if src[current_pos] == "'"
+        val = src[(current_pos + 1), 2].hex.chr
+        current_pos += 3
+        return [:hex, val, current_pos]
+      end
+
       current_pos += 1
       while (true)
         break if current_pos >= max_len
@@ -56,15 +63,9 @@ module RubyRTF
       end
       contents = src[start, current_pos - start]
 
-      # handle hex codes a little different
-      if contents =~ /^'/
-        ctrl = :hex
-        val = contents[1..-1].hex.chr
-      else
-        m = contents.match(/([\*a-z]+)(\-?\d+)?\*?/)
-        ctrl = m[1].to_sym
-        val = m[2].to_i unless $2.nil?
-      end
+      m = contents.match(/([\*a-z]+)(\-?\d+)?\*?/)
+      ctrl = m[1].to_sym
+      val = m[2].to_i unless $2.nil?
 
       # we advance past the optional space if present
       current_pos += 1 if src[current_pos] == ' '
