@@ -2,35 +2,35 @@ require 'spec_helper'
 
 describe RubyRTF::Parser do
   it 'parses hello world' do
-    src = '{\rtf1\ansi\deff0 {\fonttbl {\f0 Times New Roman;}}\f \fs60 Hello, World!}'
+    src = '{\rtf1\ansi\deff0 {\fonttbl {\f0 Times New Roman;}}\f0 \fs60 Hello, World!}'
     lambda { RubyRTF::Parser.parse(src) }.should_not raise_error
   end
 
   it 'returns a RTF::Document' do
-    src = '{\rtf1\ansi\deff0 {\fonttbl {\f0 Times New Roman;}}\f \fs60 Hello, World!}'
+    src = '{\rtf1\ansi\deff0 {\fonttbl {\f0 Times New Roman;}}\f0 \fs60 Hello, World!}'
     doc = RubyRTF::Parser.parse(src)
     doc.is_a?(RubyRTF::Document).should be_true
   end
 
   it 'parses a default font (\deffN)' do
-    src = '{\rtf1\ansi\deff10 {\fonttbl {\f10 Times New Roman;}}\f \fs60 Hello, World!}'
+    src = '{\rtf1\ansi\deff10 {\fonttbl {\f10 Times New Roman;}}\f0 \fs60 Hello, World!}'
     doc = RubyRTF::Parser.parse(src)
     doc.default_font.should == 10
   end
 
   context 'invalid document' do
     it 'raises exception if \rtf is missing' do
-      src = '{\ansi\deff0 {\fonttbl {\f0 Times New Roman;}}\f \fs60 Hello, World!}'
+      src = '{\ansi\deff0 {\fonttbl {\f0 Times New Roman;}}\f0 \fs60 Hello, World!}'
       lambda { RubyRTF::Parser.parse(src) }.should raise_error(RubyRTF::InvalidDocument)
     end
 
     it 'raises exception if the document does not start with \rtf' do
-      src = '{\ansi\deff0\rtf1 {\fonttbl {\f0 Times New Roman;}}\f \fs60 Hello, World!}'
+      src = '{\ansi\deff0\rtf1 {\fonttbl {\f0 Times New Roman;}}\f0 \fs60 Hello, World!}'
       lambda { RubyRTF::Parser.parse(src) }.should raise_error(RubyRTF::InvalidDocument)
     end
 
     it 'raises exception if the {}s are unbalanced' do
-      src = '{\rtf1\ansi\deff0 {\fonttbl {\f0 Times New Roman;}\f \fs60 Hello, World!}'
+      src = '{\rtf1\ansi\deff0 {\fonttbl {\f0 Times New Roman;}\f0 \fs60 Hello, World!}'
       lambda { RubyRTF::Parser.parse(src) }.should raise_error(RubyRTF::InvalidDocument)
     end
   end
