@@ -263,6 +263,16 @@ describe RubyRTF::Parser do
           tbl[0].theme.should == theme[1..-1].to_sym
         end
       end
+
+      it 'handles \r and \n' do
+        src = "\\cshade11\\red2\\green55\r\n\\blue23;}"
+        RubyRTF::Parser.parse_colour_table(src, 0, doc)
+        tbl = doc.colour_table
+        tbl[0].shade.should == 11
+        tbl[0].red.should == 2
+        tbl[0].green.should == 55
+        tbl[0].blue.should == 23
+      end
     end
   end
 
@@ -271,5 +281,6 @@ describe RubyRTF::Parser do
   end
 
   context 'document info' do
+    it 'parse the document info'
   end
 end

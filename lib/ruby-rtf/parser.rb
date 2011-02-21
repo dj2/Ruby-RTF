@@ -202,6 +202,7 @@ module RubyRTF
             colour.theme = ctrl.to_s[1..-1].to_sym
           end
 
+        when *["\r", "\n"] then current_pos += 1
         when ';' then
           doc.colour_table << colour
 
