@@ -87,6 +87,9 @@ module RubyRTF
       case(name)
       when :fonttbl then current_pos = parse_font_table(src, current_pos, doc)
       when :colortbl then current_pos = parse_colour_table(src, current_pos, doc)
+      when :stylesheet then current_pos = parse_stylesheet(src, current_pos, doc)
+      when :* then current_pos = parse_skip(src, current_pos, doc)
+      when :info  then current_pos = parse_info(src, current_pos, doc)
       when :deff then doc.default_font = val
 
       when *[:ansi, :mac, :pc, :pca] then doc.character_set = name
@@ -110,7 +113,7 @@ module RubyRTF
 
       in_extra = nil
 
-      while (group != 0)
+      while (true)
         case(src[current_pos])
         when '{' then
           font = RubyRTF::Font.new if group == 1
@@ -214,6 +217,51 @@ module RubyRTF
 
         when '}' then break
         end
+      end
+
+      current_pos
+    end
+
+    def self.parse_stylesheet(src, current_pos, doc)
+      group = 1
+      while (true)
+        case(src[current_pos])
+        when '{' then group += 1
+        when '}' then
+          group -= 1
+          break if group == 0
+        end
+        current_pos += 1
+      end
+
+      current_pos
+    end
+
+    def self.parse_info(src, current_pos, doc)
+      group = 1
+      while (true)
+        case(src[current_pos])
+        when '{' then group += 1
+        when '}' then
+          group -= 1
+          break if group == 0
+        end
+        current_pos += 1
+      end
+
+      current_pos
+    end
+
+    def self.parse_skip(src, current_pos, doc)
+      group = 1
+      while (true)
+        case(src[current_pos])
+        when '{' then group += 1
+        when '}' then
+          group -= 1
+          break if group == 0
+        end
+        current_pos += 1
       end
 
       current_pos
