@@ -89,5 +89,21 @@ describe RubyRTF::Document do
         sections.last[:modifiers].should == {:underline => true}
       end
     end
+
+    context '#remove_last_section!' do
+      it 'removes the last section' do
+        d = RubyRTF::Document.new
+        d.current_section[:modifiers] = {:bold => true, :italics => true}
+        d.current_section[:text] = "New text"
+
+        d.add_section!
+
+        d.current_section[:modifiers][:underline] = true
+
+        d.remove_current_section!
+        d.sections.length.should == 1
+        d.sections.first[:text].should == 'New text'
+      end
+    end
   end
 end

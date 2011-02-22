@@ -49,6 +49,13 @@ module RubyRTF
       current_section[:modifiers] = {}
     end
 
+    # Removes the last section
+    #
+    # @return [Nil]
+    def remove_current_section!
+      @sections.pop
+    end
+
     # Retrieve the current section for the document
     #
     # @return [Hash] The document section data

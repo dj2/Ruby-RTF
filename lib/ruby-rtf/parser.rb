@@ -13,7 +13,6 @@ module RubyRTF
 
       current_pos = 0
       len = src.length
-      txt = ''
 
       group_level = 0
       while (current_pos < len)
@@ -25,14 +24,22 @@ module RubyRTF
           name, val, current_pos = parse_control(src, current_pos)
           current_pos = handle_control(name, val, src, current_pos, doc)
 
-        when '{' then group_level += 1
-        when '}' then group_level -= 1
+        when '{' then
+          doc.add_section!
+          group_level += 1
+
+        when '}' then
+          doc.add_section!
+          group_level -= 1
+
         when *["\r", "\n"] then ;
-        else txt << char
+        else doc.current_section[:text] << char
         end
       end
 
       raise RubyRTF::InvalidDocument.new("Unbalanced {}s") unless group_level == 0
+
+      doc.remove_current_section! if doc.current_section[:text].empty?
       doc
     end
 

@@ -35,6 +35,38 @@ describe RubyRTF::Parser do
     end
   end
 
+  context '#parse' do
+    it 'parses text into the current section' do
+      src = '{\rtf1\ansi\deff10 {\fonttbl {\f10 Times New Roman;}}\f0 \fs60 Hello, World!}'
+      doc = RubyRTF::Parser.parse(src)
+      doc.sections.first[:text].should == 'Hello, World!'
+    end
+
+    it 'adds a new section on {' do
+      src = '{\rtf1 \fs60 Hello {\fs30 World}}'
+      doc = RubyRTF::Parser.parse(src)
+      doc.sections.first[:font_size].should == 30
+      doc.sections.first[:text].should == 'Hello '
+
+      doc.sections.last[:font_size].should == 15
+      doc.sections.last[:text].should == 'World'
+    end
+
+    it 'adds a new section on }' do
+      src = '{\rtf1 \fs60 Hello {\fs30 World}\fs12 Goodbye, cruel world.}'
+      doc = RubyRTF::Parser.parse(src)
+      section = doc.sections
+      section[0][:font_size].should == 30
+      section[0][:text].should == 'Hello '
+
+      section[1][:font_size].should == 15
+      section[1][:text].should == 'World'
+
+      section[2][:font_size].should == 6
+      section[2][:text].should == 'Goodbye, cruel world.'
+    end
+  end
+
   context '#parse_control' do
     it 'parses a normal control' do
       RubyRTF::Parser.parse_control("rtf")[0, 2].should == [:rtf, nil]
