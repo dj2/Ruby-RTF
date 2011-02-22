@@ -3,6 +3,60 @@
 
 require 'ruby-rtf'
 
+@prefix = ''
+@suffix = ''
+
+def add(symbol)
+  @prefix << "<#{symbol}>"
+  @suffix = "</#{symbol}>#{@suffix}"
+end
+
 doc = RubyRTF::Parser.parse(File.open(ARGV[0]).read)
 
-puts doc
+STDERR.puts doc
+
+str = '<html><body>'
+doc.sections.each do |section|
+  mods = section[:modifiers]
+
+  @prefix = ''
+  @suffix = ''
+
+  if mods[:paragraph]
+    if section[:text].empty?
+      str << "<p></p>\n"
+    else
+      add('p')
+    end
+
+  elsif mods[:tab]
+    str << "&nbsp;&nbsp;&nbsp;&nbsp;"
+    next
+  elsif mods[:newline]
+    str << "<br />\n"
+    next
+  elsif mods[:rquote]
+    str << "&rsquo;"
+    next
+  elsif mods[:lquote]
+    str << "&lsquo;"
+    next
+  elsif mods [:ldblquote]
+    str << "&ldquo;"
+    next
+  elsif mods [:rdblquote]
+    str << "&rdquo;"
+    next
+  end
+
+  next if section[:text].empty?
+
+  add('b') if mods[:bold]
+  add('i') if mods[:italic]
+  add('u') if mods[:underline]
+
+  str << @prefix + section[:text] + @suffix
+end
+
+str << "</body></html>"
+puts str
