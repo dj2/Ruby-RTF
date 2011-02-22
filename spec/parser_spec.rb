@@ -516,5 +516,19 @@ describe RubyRTF::Parser do
         doc.current_section[:modifiers].has_key?(:italic).should be_false
       end
     end
+
+    context 'colour' do
+      it 'sets the foreground colour' do
+        doc.colour_table << RubyRTF::Colour.new(255, 0, 255)
+        RubyRTF::Parser.handle_control(:cf, 0, nil, 0, doc)
+        doc.current_section[:modifiers][:foreground_colour].to_s.should == "[255, 0, 255]"
+      end
+
+      it 'sets the background colour' do
+        doc.colour_table << RubyRTF::Colour.new(255, 0, 255)
+        RubyRTF::Parser.handle_control(:cb, 0, nil, 0, doc)
+        doc.current_section[:modifiers][:background_colour].to_s.should == "[255, 0, 255]"
+      end
+    end
   end
 end

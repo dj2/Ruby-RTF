@@ -140,6 +140,14 @@ module RubyRTF
         doc.add_section!
         doc.current_section[:modifiers][:smallcaps] = true
 
+      when :cf then
+        doc.add_section!
+        doc.current_section[:modifiers][:foreground_colour] = doc.colour_table[val]
+
+      when :cb then
+        doc.add_section!
+        doc.current_section[:modifiers][:background_colour] = doc.colour_table[val]
+
       when :hex then doc.current_section[:text] << val
       when :u then
         char = if val > 0

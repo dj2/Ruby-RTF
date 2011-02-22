@@ -68,6 +68,14 @@ doc.sections.each do |section|
   style << "font-variant: small-caps;" if mods[:smallcaps]
   style << "font-size: #{mods[:font_size]}pt;" if mods[:font_size]
   style << "font-family: \"#{mods[:font].name}\";" if mods[:font]
+  if mods[:foreground_colour] && !mods[:foreground_colour].use_default?
+    colour = mods[:foreground_colour]
+    style << "color: rgb(#{colour.red},#{colour.green},#{colour.blue});"
+  end
+  if mods[:background_colour] && !mods[:background_colour].use_default?
+    colour = mods[:background_colour]
+    style << "background-color: rgb(#{colour.red},#{colour.green},#{colour.blue});"
+  end
 
   add("span style='#{style}'", 'span') unless style.empty?
 
