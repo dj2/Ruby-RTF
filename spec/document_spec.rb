@@ -59,9 +59,10 @@ describe RubyRTF::Document do
         d.sections.length.should == 2
       end
 
-      it 'inherits the modifiers from the previous section' do
+      it 'inherits the modifiers from the parent section' do
         d = RubyRTF::Document.new
-        d.current_section[:modifiers] = {:bold => true, :italics => true}
+        d.current_section[:modifiers][:bold] = true
+        d.current_section[:modifiers][:italics] = true
         d.current_section[:text] = "New text"
 
         d.add_section!

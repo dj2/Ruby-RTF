@@ -45,10 +45,10 @@ describe RubyRTF::Parser do
     it 'adds a new section on {' do
       src = '{\rtf1 \fs60 Hello {\fs30 World}}'
       doc = RubyRTF::Parser.parse(src)
-      doc.sections.first[:font_size].should == 30
+      doc.sections.first[:modifiers][:font_size].should == 30
       doc.sections.first[:text].should == 'Hello '
 
-      doc.sections.last[:font_size].should == 15
+      doc.sections.last[:modifiers][:font_size].should == 15
       doc.sections.last[:text].should == 'World'
     end
 
@@ -56,13 +56,36 @@ describe RubyRTF::Parser do
       src = '{\rtf1 \fs60 Hello {\fs30 World}\fs12 Goodbye, cruel world.}'
       doc = RubyRTF::Parser.parse(src)
       section = doc.sections
-      section[0][:font_size].should == 30
+      section[0][:modifiers][:font_size].should == 30
       section[0][:text].should == 'Hello '
 
-      section[1][:font_size].should == 15
+      section[1][:modifiers][:font_size].should == 15
       section[1][:text].should == 'World'
 
-      section[2][:font_size].should == 6
+      section[2][:modifiers][:font_size].should == 6
+      section[2][:text].should == 'Goodbye, cruel world.'
+    end
+
+    it 'inherits properly over {} groups' do
+      src = '{\rtf1 \b\fs60 Hello {\i\fs30 World}\ul Goodbye, cruel world.}'
+      doc = RubyRTF::Parser.parse(src)
+      section = doc.sections
+      section[0][:modifiers][:font_size].should == 30
+      section[0][:modifiers][:bold].should be_true
+      section[0][:modifiers].has_key?(:italic).should be_false
+      section[0][:modifiers].has_key?(:underline).should be_false
+      section[0][:text].should == 'Hello '
+
+      section[1][:modifiers][:font_size].should == 15
+      section[1][:modifiers][:italic].should be_true
+      section[1][:modifiers][:bold].should be_true
+      section[1][:modifiers].has_key?(:underline).should be_false
+      section[1][:text].should == 'World'
+
+      section[2][:modifiers][:font_size].should == 30
+      section[2][:modifiers][:bold].should be_true
+      section[2][:modifiers][:underline].should be_true
+      section[2][:modifiers].has_key?(:italic).should be_false
       section[2][:text].should == 'Goodbye, cruel world.'
     end
   end
@@ -344,12 +367,27 @@ describe RubyRTF::Parser do
       doc.font_table[0] = font
 
       RubyRTF::Parser.handle_control(:f, 0, nil, 0, doc)
-      doc.current_section[:font].should == font
+      doc.current_section[:modifiers][:font].should == font
     end
 
     it 'sets the font size' do
       RubyRTF::Parser.handle_control(:fs, 61, nil, 0, doc)
-      doc.current_section[:font_size].should == 30.5
+      doc.current_section[:modifiers][:font_size].should == 30.5
+    end
+
+    it 'sets bold' do
+      RubyRTF::Parser.handle_control(:b, nil, nil, 0, doc)
+      doc.current_section[:modifiers][:bold].should be_true
+    end
+
+    it 'sets underline' do
+      RubyRTF::Parser.handle_control(:ul, nil, nil, 0, doc)
+      doc.current_section[:modifiers][:underline].should be_true
+    end
+
+    it 'sets italic' do
+      RubyRTF::Parser.handle_control(:i, nil, nil, 0, doc)
+      doc.current_section[:modifiers][:italic].should be_true
     end
   end
 end

@@ -29,6 +29,7 @@ module RubyRTF
           group_level += 1
 
         when '}' then
+          doc.pop_formatting!
           doc.add_section!
           group_level -= 1
 
@@ -103,9 +104,25 @@ module RubyRTF
       when :info  then current_pos = parse_info(src, current_pos, doc)
       when :* then current_pos = parse_skip(src, current_pos, doc)
 
-      when :f then doc.current_section[:font] = doc.font_table[val]
+      when :f then
+        doc.add_section!
+        doc.current_section[:modifiers][:font] = doc.font_table[val]
       # RTF font sizes are in half-points. divide by 2 to get points
-      when :fs then doc.current_section[:font_size] = (val.to_f / 2.0)
+      when :fs then
+        doc.add_section!
+        doc.current_section[:modifiers][:font_size] = (val.to_f / 2.0)
+
+      when :b then
+        doc.add_section!
+        doc.current_section[:modifiers][:bold] = true
+
+      when :i then
+        doc.add_section!
+        doc.current_section[:modifiers][:italic] = true
+
+      when :ul then
+        doc.add_section!
+        doc.current_section[:modifiers][:underline] = true
 
       else puts "Unknown control #{name} with #{val} at #{current_pos}"
       end

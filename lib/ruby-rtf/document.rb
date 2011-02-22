@@ -15,7 +15,10 @@ module RubyRTF
     attr_accessor :character_set
 
     # @return [Array] The different formatted sections of the document
-    attr_accessor :sections
+    attr_reader :sections
+
+    # @return [Array] The current formatting block to use as the basis for new sections
+    attr_reader :formatting_stack
 
     # Creates a new document
     #
@@ -26,7 +29,9 @@ module RubyRTF
       @character_set = :ansi
       @default_font = 0
 
-      @sections = [{:text => '', :modifiers => {}}]
+      default_mods = {}
+      @formatting_stack = [default_mods]
+      @sections = [{:text => '', :modifiers => default_mods}]
     end
 
     # Add a new section to the document
@@ -37,7 +42,8 @@ module RubyRTF
       return if current_section[:text].empty?
 
       mods = {}
-      current_section[:modifiers].each_pair { |k, v| mods[k] = v } if current_section
+      formatting_stack.last.each_pair { |k, v| mods[k] = v } if current_section
+      formatting_stack.push(mods)
 
       @sections << {:text => '', :modifiers => mods}
     end
@@ -49,18 +55,26 @@ module RubyRTF
       current_section[:modifiers] = {}
     end
 
+    # Pop the current top element off the formatting stack.
+    # @note This will not allow you to remove the defualt formatting parameters
+    #
+    # @return [Nil]
+    def pop_formatting!
+      formatting_stack.pop if @formatting_stack.length > 1
+    end
+
     # Removes the last section
     #
     # @return [Nil]
     def remove_current_section!
-      @sections.pop
+      sections.pop
     end
 
     # Retrieve the current section for the document
     #
     # @return [Hash] The document section data
     def current_section
-      @sections.last
+      sections.last
     end
 
     # Convert RubyRTF::Document to a string
@@ -82,7 +96,7 @@ module RubyRTF
 
       str << "  Body:\n\n"
       sections.each do |section|
-        str << "#{section[:text]}\n"
+        str << "#{section[:modifiers].inspect}\n#{section[:text]}\n"
       end
 
       str
