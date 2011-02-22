@@ -132,6 +132,14 @@ module RubyRTF
         doc.add_section!
         doc.current_section[:modifiers][:subscript] = true
 
+      when :strike then
+        doc.add_section!
+        doc.current_section[:modifiers][:strikethrough] = true
+
+      when :scaps then
+        doc.add_section!
+        doc.current_section[:modifiers][:smallcaps] = true
+
       when :hex then doc.current_section[:text] << val
       when :u then
         char = if val > 0
@@ -165,6 +173,24 @@ module RubyRTF
         doc.force_section!
         doc.current_section[:modifiers][:tab] = true
         doc.current_section[:text] << "\t"
+        doc.pop_formatting!
+
+        doc.force_section!
+        doc.pop_formatting!
+
+      when :emdash then
+        doc.force_section!
+        doc.current_section[:modifiers][:emdash] = true
+        doc.current_section[:text] << "--"
+        doc.pop_formatting!
+
+        doc.force_section!
+        doc.pop_formatting!
+
+      when :endash then
+        doc.force_section!
+        doc.current_section[:modifiers][:endash] = true
+        doc.current_section[:text] << "-"
         doc.pop_formatting!
 
         doc.force_section!
