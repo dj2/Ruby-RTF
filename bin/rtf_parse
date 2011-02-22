@@ -54,7 +54,6 @@ doc.sections.each do |section|
     str << "&ndash;"
     next
   end
-
   next if section[:text].empty?
 
   add('b') if mods[:bold]
