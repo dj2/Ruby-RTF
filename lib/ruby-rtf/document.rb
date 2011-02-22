@@ -29,6 +29,10 @@ module RubyRTF
       @sections = [{:text => '', :modifiers => {}}]
     end
 
+    # Add a new section to the document
+    # @note If there is no text added to the current section this does nothing
+    #
+    # @return [Nil]
     def add_section!
       return if current_section[:text].empty?
 
@@ -38,10 +42,16 @@ module RubyRTF
       @sections << {:text => '', :modifiers => mods}
     end
 
+    # Reset the current section to default settings
+    #
+    # @return [Nil]
     def reset_section!
       current_section[:modifiers] = {}
     end
 
+    # Retrieve the current section for the document
+    #
+    # @return [Hash] The document section data
     def current_section
       @sections.last
     end

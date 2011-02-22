@@ -227,6 +227,14 @@ module RubyRTF
       current_pos
     end
 
+    # Parses the stylesheet group
+    #
+    # @param src [String] The source document
+    # @param current_pos [Integer] The starting position
+    # @param doc [RubyRTF::Document] The document
+    # @return [Integer] The new current position
+    #
+    # @api private
     def self.parse_stylesheet(src, current_pos, doc)
       group = 1
       while (true)
@@ -242,6 +250,14 @@ module RubyRTF
       current_pos
     end
 
+    # Parses the info group
+    #
+    # @param src [String] The source document
+    # @param current_pos [Integer] The starting position
+    # @param doc [RubyRTF::Document] The document
+    # @return [Integer] The new current position
+    #
+    # @api private
     def self.parse_info(src, current_pos, doc)
       group = 1
       while (true)
@@ -257,6 +273,14 @@ module RubyRTF
       current_pos
     end
 
+    # Parses a comment group
+    #
+    # @param src [String] The source document
+    # @param current_pos [Integer] The starting position
+    # @param doc [RubyRTF::Document] The document
+    # @return [Integer] The new current position
+    #
+    # @api private
     def self.parse_skip(src, current_pos, doc)
       group = 1
       while (true)
