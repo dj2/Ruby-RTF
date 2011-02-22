@@ -389,5 +389,23 @@ describe RubyRTF::Parser do
       RubyRTF::Parser.handle_control(:i, nil, nil, 0, doc)
       doc.current_section[:modifiers][:italic].should be_true
     end
+
+    it 'sets a rquote' do
+      doc.current_section[:text] = 'My code'
+      RubyRTF::Parser.handle_control(:rquote, nil, nil, 0, doc)
+      doc.current_section[:text].should == "My code'"
+    end
+
+    it 'sets a lquote' do
+      doc.current_section[:text] = 'My code'
+      RubyRTF::Parser.handle_control(:lquote, nil, nil, 0, doc)
+      doc.current_section[:text].should == "My code'"
+    end
+
+    it 'sets a hex character' do
+      doc.current_section[:text] = 'My code'
+      RubyRTF::Parser.handle_control(:hex, '~', nil, 0, doc)
+      doc.current_section[:text].should == 'My code~'
+    end
   end
 end

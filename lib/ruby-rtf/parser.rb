@@ -124,6 +124,9 @@ module RubyRTF
         doc.add_section!
         doc.current_section[:modifiers][:underline] = true
 
+      when :hex then doc.current_section[:text] << val
+      when *[:rquote, :lquote] then doc.current_section[:text] << "'"
+
       else puts "Unknown control #{name} with #{val} at #{current_pos}"
       end
       current_pos
