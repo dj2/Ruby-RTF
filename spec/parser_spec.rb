@@ -506,13 +506,15 @@ describe RubyRTF::Parser do
       doc.current_section[:text].should == ""
     end
 
-    it 'resets the current sections formattion to default' do
-      doc.current_section[:modifiers][:bold] = true
-      doc.current_section[:modifiers][:italic] = true
-      RubyRTF::Parser.handle_control(:pard, nil, nil, 0, doc)
+    %w(pard plain).each do |type|
+      it "resets the current sections information to default for #{type}" do
+        doc.current_section[:modifiers][:bold] = true
+        doc.current_section[:modifiers][:italic] = true
+        RubyRTF::Parser.handle_control(type.to_sym, nil, nil, 0, doc)
 
-      doc.current_section[:modifiers].has_key?(:bold).should be_false
-      doc.current_section[:modifiers].has_key?(:italic).should be_false
+        doc.current_section[:modifiers].has_key?(:bold).should be_false
+        doc.current_section[:modifiers].has_key?(:italic).should be_false
+      end
     end
   end
 end

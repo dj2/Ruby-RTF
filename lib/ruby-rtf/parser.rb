@@ -219,7 +219,7 @@ module RubyRTF
         doc.force_section!
         doc.pop_formatting!
 
-      when :pard then doc.reset_current_section!
+      when *[:pard, :plain] then doc.reset_current_section!
 
       else STDERR.puts "Unknown control #{name} with #{val} at #{current_pos}"
       end
