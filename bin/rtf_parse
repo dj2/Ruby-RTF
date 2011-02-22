@@ -6,9 +6,9 @@ require 'ruby-rtf'
 @prefix = ''
 @suffix = ''
 
-def add(symbol)
-  @prefix << "<#{symbol}>"
-  @suffix = "</#{symbol}>#{@suffix}"
+def add(open, close = open)
+  @prefix << "<#{open}>"
+  @suffix = "</#{close}>#{@suffix}"
 end
 
 doc = RubyRTF::Parser.parse(File.open(ARGV[0]).read)
@@ -41,11 +41,17 @@ doc.sections.each do |section|
   elsif mods[:lquote]
     str << "&lsquo;"
     next
-  elsif mods [:ldblquote]
+  elsif mods[:ldblquote]
     str << "&ldquo;"
     next
-  elsif mods [:rdblquote]
+  elsif mods[:rdblquote]
     str << "&rdquo;"
+    next
+  elsif mods[:emdash]
+    str << "&mdash;"
+    next
+  elsif mods[:endash]
+    str << "&ndash;"
     next
   end
 
@@ -56,6 +62,14 @@ doc.sections.each do |section|
   add('u') if mods[:underline]
   add('sup') if mods[:superscript]
   add('sub') if mods[:subscript]
+  add('del') if mods[:strikethrough]
+
+  style = ''
+  style << "font-variant: small-caps;" if mods[:smallcaps]
+  style << "font-size: #{mods[:font_size]}pt;" if mods[:font_size]
+  style << "font-family: \"#{mods[:font].name}\";" if mods[:font]
+
+  add("span style='#{style}'", 'span') unless style.empty?
 
   str << @prefix + section[:text] + @suffix
 end
