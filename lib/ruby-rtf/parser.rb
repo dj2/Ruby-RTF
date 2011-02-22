@@ -1,15 +1,22 @@
 module RubyRTF
   # Handles the parsing of RTF content into an RubyRTF::Document
   class Parser
+    # @return [Array] The current formatting block to use as the basis for new sections
+    attr_reader :formatting_stack
+
+    def initialize
+      default_mods = {}
+      @doc = RubyRTF::Document.new(default_mods)
+      @formatting_stack = [default_mods]
+    end
+
     # Parses a given string into an RubyRTF::Document
     #
     # @param src [String] The document to parse
     # @return [RubyRTF::Document] The RTF document representing the provided @doc
     # @raise [RubyRTF::InvalidDocument] Raised if the document is not valid RTF
-    def self.parse(src)
+    def parse(src)
       raise RubyRTF::InvalidDocument.new("Opening \\rtf1 missing") unless src =~ /\{\\rtf1/
-
-      doc = RubyRTF::Document.new
 
       current_pos = 0
       len = src.length
@@ -22,26 +29,26 @@ module RubyRTF
         case(char)
         when '\\' then
           name, val, current_pos = parse_control(src, current_pos)
-          current_pos = handle_control(name, val, src, current_pos, doc)
+          current_pos = handle_control(name, val, src, current_pos)
 
         when '{' then
-          doc.add_section!
+          add_section!
           group_level += 1
 
         when '}' then
-          doc.pop_formatting!
-          doc.add_section!
+          pop_formatting!
+          add_section!
           group_level -= 1
 
         when *["\r", "\n"] then ;
-        else doc.current_section[:text] << char
+        else @doc.current_section[:text] << char
         end
       end
 
       raise RubyRTF::InvalidDocument.new("Unbalanced {}s") unless group_level == 0
 
-      doc.remove_current_section! if doc.current_section[:text].empty?
-      doc
+      @doc.remove_current_section! if @doc.current_section[:text].empty?
+      @doc
     end
 
     # Parses a control switch
@@ -51,7 +58,7 @@ module RubyRTF
     # @return [String, String|Integer, Integer] The name, optional control value and the new current position
     #
     # @api private
-    def self.parse_control(src, current_pos = 0)
+    def parse_control(src, current_pos = 0)
       ctrl = ''
       val = nil
 
@@ -89,129 +96,91 @@ module RubyRTF
     # @param val [Integer|nil] The controls value, or nil if non associated
     # @param src [String] The source document
     # @param current_pos [Integer] The current document position
-    # @param doc [RubyRTF::Document] The document
     # @return [Integer] The new current position
     #
     # @api private
-    def self.handle_control(name, val, src, current_pos, doc)
+    def handle_control(name, val, src, current_pos)
       case(name)
       when :rtf then ;
-      when :deff then doc.default_font = val
-      when *[:ansi, :mac, :pc, :pca] then doc.character_set = name
-      when :fonttbl then current_pos = parse_font_table(src, current_pos, doc)
-      when :colortbl then current_pos = parse_colour_table(src, current_pos, doc)
-      when :stylesheet then current_pos = parse_stylesheet(src, current_pos, doc)
-      when :info  then current_pos = parse_info(src, current_pos, doc)
-      when :* then current_pos = parse_skip(src, current_pos, doc)
+      when :deff then @doc.default_font = val
+      when *[:ansi, :mac, :pc, :pca] then @doc.character_set = name
+      when :fonttbl then current_pos = parse_font_table(src, current_pos)
+      when :colortbl then current_pos = parse_colour_table(src, current_pos)
+      when :stylesheet then current_pos = parse_stylesheet(src, current_pos)
+      when :info  then current_pos = parse_info(src, current_pos)
+      when :* then current_pos = parse_skip(src, current_pos)
 
-      when :f then
-        doc.add_section!
-        doc.current_section[:modifiers][:font] = doc.font_table[val]
+      when :f then add_section!(:font => @doc.font_table[val])
+
       # RTF font sizes are in half-points. divide by 2 to get points
-      when :fs then
-        doc.add_section!
-        doc.current_section[:modifiers][:font_size] = (val.to_f / 2.0)
-
-      when :b then
-        doc.add_section!
-        doc.current_section[:modifiers][:bold] = true
-
-      when :i then
-        doc.add_section!
-        doc.current_section[:modifiers][:italic] = true
-
-      when :ul then
-        doc.add_section!
-        doc.current_section[:modifiers][:underline] = true
-
-      when :super then
-        doc.add_section!
-        doc.current_section[:modifiers][:superscript] = true
-
-      when :sub then
-        doc.add_section!
-        doc.current_section[:modifiers][:subscript] = true
-
-      when :strike then
-        doc.add_section!
-        doc.current_section[:modifiers][:strikethrough] = true
-
-      when :scaps then
-        doc.add_section!
-        doc.current_section[:modifiers][:smallcaps] = true
-
-      when :cf then
-        doc.add_section!
-        doc.current_section[:modifiers][:foreground_colour] = doc.colour_table[val]
-
-      when :cb then
-        doc.add_section!
-        doc.current_section[:modifiers][:background_colour] = doc.colour_table[val]
-
-      when :hex then doc.current_section[:text] << val
+      when :fs then add_section!(:font_size => (val.to_f / 2.0))
+      when :b then add_section!(:bold => true)
+      when :i then add_section!(:italic => true)
+      when :ul then add_section!(:underline => true)
+      when :super then add_section!(:superscript => true)
+      when :sub then add_section!(:subscript => true)
+      when :strike then add_section!(:strikethrough => true)
+      when :scaps then add_section!(:smallcaps => true)
+      when :cf then add_section!(:foreground_colour => @doc.colour_table[val])
+      when :cb then add_section!(:background_colour => @doc.colour_table[val])
+      when :hex then @doc.current_section[:text] << val
       when :u then
         char = if val > 0
           '\u' + val
         else
           '\u' + (val + 65_536).to_s
         end
-        doc.current_section[:text] << char
+        @doc.current_section[:text] << char
 
       # force a new section so we can mark this as a [rl]quote section
       # but stick the ' in the text so it can be displayed easily
       when *[:rquote, :lquote] then
-        doc.force_section!
-        doc.current_section[:modifiers][name] = true
-        doc.current_section[:text] << "'"
-        doc.force_section!
+        force_section!(name => true)
+        @doc.current_section[:text] << "'"
+        force_section!
 
       # force a new section so we can mark this as a [rl]dbquote section
       # but stick the " in the text so it can be displayed easily
       when *[:rdblquote, :ldblquote] then
-        doc.force_section!
-        doc.current_section[:modifiers][name] = true
-        doc.current_section[:text] << '"'
-        doc.force_section!
+        force_section!(name => true)
+        @doc.current_section[:text] << '"'
+        force_section!
 
-      when :'{' then doc.current_section[:text] << "{"
-      when :'}' then doc.current_section[:text] << "}"
-      when :'\\' then doc.current_section[:text] << '\\'
+      when :'{' then @doc.current_section[:text] << "{"
+      when :'}' then @doc.current_section[:text] << "}"
+      when :'\\' then @doc.current_section[:text] << '\\'
 
       when :tab then
-        doc.force_section!
-        doc.current_section[:modifiers][:tab] = true
-        doc.current_section[:text] << "\t"
-        doc.pop_formatting!
+        force_section!(:tab => true)
+        @doc.current_section[:text] << "\t"
+        pop_formatting!
 
-        doc.force_section!
-        doc.pop_formatting!
+        force_section!
+        pop_formatting!
 
       when :emdash then
-        doc.force_section!
-        doc.current_section[:modifiers][:emdash] = true
-        doc.current_section[:text] << "--"
-        doc.pop_formatting!
+        force_section!(:emdash => true)
+        @doc.current_section[:text] << "--"
+        pop_formatting!
 
-        doc.force_section!
-        doc.pop_formatting!
+        force_section!
+        pop_formatting!
 
       when :endash then
-        doc.force_section!
-        doc.current_section[:modifiers][:endash] = true
-        doc.current_section[:text] << "-"
-        doc.pop_formatting!
+        force_section!(:endash => true)
+        @doc.current_section[:text] << "-"
+        pop_formatting!
 
-        doc.force_section!
-        doc.pop_formatting!
+        force_section!
+        pop_formatting!
 
       when *[:line, :'\n'] then
-        doc.force_section!
-        doc.current_section[:modifiers][:newline] = true
-        doc.current_section[:text] << "\n"
-        doc.pop_formatting!
+        force_section!(:newline => true)
+        @doc.current_section[:text] << "\n"
+        pop_formatting!
 
-        doc.force_section!
-        doc.pop_formatting!
+        force_section!
+        pop_formatting!
 
       when :'\r' then ;
 
@@ -220,14 +189,18 @@ module RubyRTF
         # from the formatting stack. We then add a new section after the paragraph
         # which we also remove from the stack. Any new switches will for an
         # add_group which will add a new section
-        doc.force_section!
-        doc.current_section[:modifiers][:paragraph] = true
-        doc.pop_formatting!
+        force_section!(:paragraph => true)
+        pop_formatting!
 
-        doc.force_section!
-        doc.pop_formatting!
+        force_section!
+        pop_formatting!
 
-      when *[:pard, :plain] then doc.reset_current_section!
+      when *[:pard, :plain] then @doc.reset_current_section!
+
+      when :trowd then ;
+      when :cell then ;
+      when :row then ;
+      when :intbl then ;
 
       else STDERR.puts "Unknown control #{name} with #{val} at #{current_pos}"
       end
@@ -238,11 +211,10 @@ module RubyRTF
     #
     # @param src [String] The source document
     # @param current_pos [Integer] The starting position
-    # @param doc [RubyRTF::Document] The document
     # @return [Integer] The new current position
     #
     # @api private
-    def self.parse_font_table(src, current_pos, doc)
+    def parse_font_table(src, current_pos)
       group = 1
 
       font = nil
@@ -261,7 +233,7 @@ module RubyRTF
 
           if group == 1
             font.cleanup_names
-            doc.font_table[font.number] = font
+            @doc.font_table[font.number] = font
           end
 
           in_extra = nil
@@ -309,16 +281,15 @@ module RubyRTF
     #
     # @param src [String] The source document
     # @param current_pos [Integer] The starting position
-    # @param doc [RubyRTF::Document] The document
     # @return [Integer] The new current position
     #
     # @api private
-    def self.parse_colour_table(src, current_pos, doc)
+    def parse_colour_table(src, current_pos)
       if src[current_pos] == ';'
         colour = RubyRTF::Colour.new
         colour.use_default = true
 
-        doc.colour_table << colour
+        @doc.colour_table << colour
 
         current_pos += 1
       end
@@ -345,7 +316,7 @@ module RubyRTF
 
         when *["\r", "\n"] then current_pos += 1
         when ';' then
-          doc.colour_table << colour
+          @doc.colour_table << colour
 
           colour = RubyRTF::Colour.new
           current_pos += 1
@@ -361,11 +332,10 @@ module RubyRTF
     #
     # @param src [String] The source document
     # @param current_pos [Integer] The starting position
-    # @param doc [RubyRTF::Document] The document
     # @return [Integer] The new current position
     #
     # @api private
-    def self.parse_stylesheet(src, current_pos, doc)
+    def parse_stylesheet(src, current_pos)
       group = 1
       while (true)
         case(src[current_pos])
@@ -384,11 +354,10 @@ module RubyRTF
     #
     # @param src [String] The source document
     # @param current_pos [Integer] The starting position
-    # @param doc [RubyRTF::Document] The document
     # @return [Integer] The new current position
     #
     # @api private
-    def self.parse_info(src, current_pos, doc)
+    def parse_info(src, current_pos)
       group = 1
       while (true)
         case(src[current_pos])
@@ -407,11 +376,10 @@ module RubyRTF
     #
     # @param src [String] The source document
     # @param current_pos [Integer] The starting position
-    # @param doc [RubyRTF::Document] The document
     # @return [Integer] The new current position
     #
     # @api private
-    def self.parse_skip(src, current_pos, doc)
+    def parse_skip(src, current_pos)
       group = 1
       while (true)
         case(src[current_pos])
@@ -424,6 +392,40 @@ module RubyRTF
       end
 
       current_pos
+    end
+
+    # Keys that aren't inherited
+    BLACKLISTED = [:paragraph, :newline, :tab, :lquote, :rquote, :ldblquote, :rdblquote]
+
+    def calc_current_modifiers(mods = {})
+      if @doc.current_section
+        formatting_stack.last.each_pair do |k, v|
+          next if BLACKLISTED.include?(k)
+          mods[k] = v
+        end
+      end
+      formatting_stack.push(mods)
+      mods
+    end
+
+    def add_section!(mods = {})
+      if @doc.current_section[:text].empty?
+        @doc.current_section[:modifiers].merge!(mods)
+      else
+        force_section!(mods)
+      end
+    end
+
+    def force_section!(mods = {})
+      @doc.add_section!(calc_current_modifiers.merge(mods))
+    end
+
+    # Pop the current top element off the formatting stack.
+    # @note This will not allow you to remove the defualt formatting parameters
+    #
+    # @return [Nil]
+    def pop_formatting!
+      formatting_stack.pop if formatting_stack.length > 1
     end
   end
 end

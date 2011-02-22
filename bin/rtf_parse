@@ -11,7 +11,7 @@ def add(open, close = open)
   @suffix = "</#{close}>#{@suffix}"
 end
 
-doc = RubyRTF::Parser.parse(File.open(ARGV[0]).read)
+doc = RubyRTF::Parser.new.parse(File.open(ARGV[0]).read)
 
 STDERR.puts doc
 

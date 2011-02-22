@@ -17,48 +17,22 @@ module RubyRTF
     # @return [Array] The different formatted sections of the document
     attr_reader :sections
 
-    # @return [Array] The current formatting block to use as the basis for new sections
-    attr_reader :formatting_stack
-
-    # Keys that aren't inherited
-    BLACKLISTED = [:paragraph, :newline, :tab, :lquote, :rquote, :ldblquote, :rdblquote]
-
     # Creates a new document
     #
     # @return [RubyRTF::Document] The new document
-    def initialize
+    def initialize(default_mods)
       @font_table = []
       @colour_table = []
       @character_set = :ansi
       @default_font = 0
 
-      default_mods = {}
-      @formatting_stack = [default_mods]
       @sections = [{:text => '', :modifiers => default_mods}]
-    end
-
-    # Add a new section to the document
-    # @note If there is no text added to the current section this does nothing
-    #
-    # @return [Nil]
-    def add_section!
-      return if current_section[:text].empty?
-      force_section!
     end
 
     # Adds a new section to the document regardless if the current section is empty
     #
     # @return [Nil]
-    def force_section!
-      mods = {}
-      if current_section
-        formatting_stack.last.each_pair do |k, v|
-          next if BLACKLISTED.include?(k)
-          mods[k] = v
-        end
-      end
-      formatting_stack.push(mods)
-
+    def add_section!(mods = {})
       @sections << {:text => '', :modifiers => mods}
     end
 
@@ -74,14 +48,6 @@ module RubyRTF
     # @return [Nil]
     def reset_section!
       current_section[:modifiers] = {}
-    end
-
-    # Pop the current top element off the formatting stack.
-    # @note This will not allow you to remove the defualt formatting parameters
-    #
-    # @return [Nil]
-    def pop_formatting!
-      formatting_stack.pop if @formatting_stack.length > 1
     end
 
     # Removes the last section
