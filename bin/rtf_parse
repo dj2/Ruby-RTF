@@ -54,6 +54,8 @@ doc.sections.each do |section|
   add('b') if mods[:bold]
   add('i') if mods[:italic]
   add('u') if mods[:underline]
+  add('sup') if mods[:superscript]
+  add('sub') if mods[:subscript]
 
   str << @prefix + section[:text] + @suffix
 end

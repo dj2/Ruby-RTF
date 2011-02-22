@@ -124,6 +124,14 @@ module RubyRTF
         doc.add_section!
         doc.current_section[:modifiers][:underline] = true
 
+      when :super then
+        doc.add_section!
+        doc.current_section[:modifiers][:superscript] = true
+
+      when :sub then
+        doc.add_section!
+        doc.current_section[:modifiers][:subscript] = true
+
       when :hex then doc.current_section[:text] << val
       when :u then
         char = if val > 0

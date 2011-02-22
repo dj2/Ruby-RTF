@@ -442,6 +442,22 @@ describe RubyRTF::Parser do
       doc.current_section[:text].should == "\t"
     end
 
+    it 'inserts a \super' do
+      doc.current_section[:text] = "end."
+      RubyRTF::Parser.handle_control(:super, nil, nil, 0, doc)
+
+      doc.current_section[:modifiers][:superscript].should be_true
+      doc.current_section[:text].should == ""
+    end
+
+    it 'inserts a \sub' do
+      doc.current_section[:text] = "end."
+      RubyRTF::Parser.handle_control(:sub, nil, nil, 0, doc)
+
+      doc.current_section[:modifiers][:subscript].should be_true
+      doc.current_section[:text].should == ""
+    end
+
     context 'escapes' do
       ['{', '}', '\\'].each do |escape|
         it "inserts an escaped #{escape}" do
