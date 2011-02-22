@@ -18,8 +18,6 @@ infinity_test do
       run :all => :tests
     end
     add('^lib/(.*)\.rb') do |file|
-      p file
-      p file[1].split('/').last
       run :test_for => file[1].split('/').last
     end
   end
