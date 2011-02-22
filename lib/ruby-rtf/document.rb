@@ -20,6 +20,9 @@ module RubyRTF
     # @return [Array] The current formatting block to use as the basis for new sections
     attr_reader :formatting_stack
 
+    # Keys that aren't inherited
+    BLACKLISTED = [:paragraph, :newline, :tab, :lquote, :rquote, :ldblquote, :rdblquote]
+
     # Creates a new document
     #
     # @return [RubyRTF::Document] The new document
@@ -40,12 +43,30 @@ module RubyRTF
     # @return [Nil]
     def add_section!
       return if current_section[:text].empty?
+      force_section!
+    end
 
+    # Adds a new section to the document regardless if the current section is empty
+    #
+    # @return [Nil]
+    def force_section!
       mods = {}
-      formatting_stack.last.each_pair { |k, v| mods[k] = v } if current_section
+      if current_section
+        formatting_stack.last.each_pair do |k, v|
+          next if BLACKLISTED.include?(k)
+          mods[k] = v
+        end
+      end
       formatting_stack.push(mods)
 
       @sections << {:text => '', :modifiers => mods}
+    end
+
+    # Resets the current section to default formating
+    #
+    # @return [Nil]
+    def reset_current_section!
+      current_section[:modifiers].clear
     end
 
     # Reset the current section to default settings

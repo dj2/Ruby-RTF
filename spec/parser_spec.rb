@@ -390,22 +390,81 @@ describe RubyRTF::Parser do
       doc.current_section[:modifiers][:italic].should be_true
     end
 
-    it 'sets a rquote' do
-      doc.current_section[:text] = 'My code'
-      RubyRTF::Parser.handle_control(:rquote, nil, nil, 0, doc)
-      doc.current_section[:text].should == "My code'"
+    %w(rquote lquote).each do |quote|
+      it "sets a #{quote}" do
+        doc.current_section[:text] = 'My code'
+        RubyRTF::Parser.handle_control(quote.to_sym, nil, nil, 0, doc)
+        doc.remove_current_section!
+        doc.current_section[:text].should == "'"
+        doc.current_section[:modifiers][quote.to_sym].should be_true
+      end
     end
 
-    it 'sets a lquote' do
-      doc.current_section[:text] = 'My code'
-      RubyRTF::Parser.handle_control(:lquote, nil, nil, 0, doc)
-      doc.current_section[:text].should == "My code'"
+    %w(rdblquote ldblquote).each do |quote|
+      it "sets a #{quote}" do
+        doc.current_section[:text] = 'My code'
+        RubyRTF::Parser.handle_control(quote.to_sym, nil, nil, 0, doc)
+        doc.remove_current_section!
+        doc.current_section[:text].should == '"'
+        doc.current_section[:modifiers][quote.to_sym].should be_true
+      end
     end
 
     it 'sets a hex character' do
       doc.current_section[:text] = 'My code'
       RubyRTF::Parser.handle_control(:hex, '~', nil, 0, doc)
       doc.current_section[:text].should == 'My code~'
+    end
+
+    context 'new line' do
+      ['line', '\n'].each do |type|
+        it "sets from #{type}" do
+          doc.current_section[:text] = "end."
+          RubyRTF::Parser.handle_control(type.to_sym, nil, nil, 0, doc)
+          doc.remove_current_section!
+          doc.current_section[:modifiers][:newline].should be_true
+          doc.current_section[:text].should == "\n"
+        end
+      end
+
+      it 'ignores \r' do
+        doc.current_section[:text] = "end."
+        RubyRTF::Parser.handle_control(:'\r', nil, nil, 0, doc)
+        doc.current_section[:text].should == "end."
+      end
+    end
+
+    it 'inserts a \tab' do
+      doc.current_section[:text] = "end."
+      RubyRTF::Parser.handle_control(:tab, nil, nil, 0, doc)
+      doc.remove_current_section!
+      doc.current_section[:modifiers][:tab].should be_true
+      doc.current_section[:text].should == "\t"
+    end
+
+    context 'escapes' do
+      ['{', '}', '\\'].each do |escape|
+        it "inserts an escaped #{escape}" do
+          doc.current_section[:text] = "end."
+          RubyRTF::Parser.handle_control(escape.to_sym, nil, nil, 0, doc)
+          doc.current_section[:text].should == "end.#{escape}"
+        end
+      end
+    end
+
+    it 'adds a new section for a par command' do
+      doc.current_section[:text] = 'end.'
+      RubyRTF::Parser.handle_control(:par, nil, nil, 0, doc)
+      doc.current_section[:text].should == ""
+    end
+
+    it 'resets the current sections formattion to default' do
+      doc.current_section[:modifiers][:bold] = true
+      doc.current_section[:modifiers][:italic] = true
+      RubyRTF::Parser.handle_control(:pard, nil, nil, 0, doc)
+
+      doc.current_section[:modifiers].has_key?(:bold).should be_false
+      doc.current_section[:modifiers].has_key?(:italic).should be_false
     end
   end
 end

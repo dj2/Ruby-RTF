@@ -125,9 +125,69 @@ module RubyRTF
         doc.current_section[:modifiers][:underline] = true
 
       when :hex then doc.current_section[:text] << val
-      when *[:rquote, :lquote] then doc.current_section[:text] << "'"
+      when :u then
+        char = if val > 0
+          '\u' + val
+        else
+          '\u' + (val + 65_536).to_s
+        end
+        doc.current_section[:text] << char
 
-      else puts "Unknown control #{name} with #{val} at #{current_pos}"
+      # force a new section so we can mark this as a [rl]quote section
+      # but stick the ' in the text so it can be displayed easily
+      when *[:rquote, :lquote] then
+        doc.force_section!
+        doc.current_section[:modifiers][name] = true
+        doc.current_section[:text] << "'"
+        doc.force_section!
+
+      # force a new section so we can mark this as a [rl]dbquote section
+      # but stick the " in the text so it can be displayed easily
+      when *[:rdblquote, :ldblquote] then
+        doc.force_section!
+        doc.current_section[:modifiers][name] = true
+        doc.current_section[:text] << '"'
+        doc.force_section!
+
+      when :'{' then doc.current_section[:text] << "{"
+      when :'}' then doc.current_section[:text] << "}"
+      when :'\\' then doc.current_section[:text] << '\\'
+
+      when :tab then
+        doc.force_section!
+        doc.current_section[:modifiers][:tab] = true
+        doc.current_section[:text] << "\t"
+        doc.pop_formatting!
+
+        doc.force_section!
+        doc.pop_formatting!
+
+      when *[:line, :'\n'] then
+        doc.force_section!
+        doc.current_section[:modifiers][:newline] = true
+        doc.current_section[:text] << "\n"
+        doc.pop_formatting!
+
+        doc.force_section!
+        doc.pop_formatting!
+
+      when :'\r' then ;
+
+      when :par then
+        # force a fake section for the paragraph and then remove it
+        # from the formatting stack. We then add a new section after the paragraph
+        # which we also remove from the stack. Any new switches will for an
+        # add_group which will add a new section
+        doc.force_section!
+        doc.current_section[:modifiers][:paragraph] = true
+        doc.pop_formatting!
+
+        doc.force_section!
+        doc.pop_formatting!
+
+      when :pard then doc.reset_current_section!
+
+      else STDERR.puts "Unknown control #{name} with #{val} at #{current_pos}"
       end
       current_pos
     end
