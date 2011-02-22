@@ -1,6 +1,9 @@
 module RubyRTF
   # Holds the information for a given font
   class Font
+    # @return [Integer] The font numberb
+    attr_accessor :number
+
     # @return [String] The font name
     attr_accessor :name
 
@@ -25,8 +28,6 @@ module RubyRTF
     # @return [Symbol] The font family command
     attr_accessor :family_command
 
-    alias :to_s :name
-
     # The font families
     FAMILIES = [:nil, :roman, :swiss, :modern, :script, :decor, :tech, :bldl]
 
@@ -35,10 +36,11 @@ module RubyRTF
 
     # Creates a new font
     #
+    # @param name [String] The font name to set (default: '')
     # @return [RubyRTF::Font] The new font
-    def initialize
+    def initialize(name = '')
       @family_command = :nil
-      @name = ''
+      @name = name
       @alternate_name = ''
       @non_tagged_name = ''
       @panose = ''
@@ -59,6 +61,13 @@ module RubyRTF
       @name = cleanup_name(@name)
       @alternate_name = cleanup_name(@alternate_name)
       @non_tagged_name = cleanup_name(@non_tagged_name)
+    end
+
+    # Convert to string format
+    #
+    # @return [String] The string representation
+    def to_s
+      "#{number}: #{name}"
     end
 
     private

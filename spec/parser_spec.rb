@@ -91,7 +91,7 @@ describe RubyRTF::Parser do
   context 'character set' do
     %w(ansi mac pc pca).each do |type|
       it "accepts #{type}" do
-        src = "{\\rtf1\\#{type}\\deff0 {\\fonttbl {\\f0 Times New Roman;}}\\f \\fs60 Hello, World!}"
+        src = "{\\rtf1\\#{type}\\deff0 {\\fonttbl {\\f0 Times New Roman;}}\\f0 \\fs60 Hello, World!}"
         doc = RubyRTF::Parser.parse(src)
         doc.character_set.should == type.to_sym
       end
@@ -301,6 +301,23 @@ describe RubyRTF::Parser do
   end
 
   context 'document info' do
-    it 'parse the document info'
+    it 'parse the doocument info'
+  end
+
+  context '#handle_control' do
+    let(:doc) { RubyRTF::Document.new }
+
+    it 'sets the font' do
+      font = RubyRTF::Font.new('Times New Roman')
+      doc.font_table[0] = font
+
+      RubyRTF::Parser.handle_control(:f, 0, nil, 0, doc)
+      doc.current_section[:font].should == font
+    end
+
+    it 'sets the font size' do
+      RubyRTF::Parser.handle_control(:fs, 61, nil, 0, doc)
+      doc.current_section[:font_size].should == 30.5
+    end
   end
 end

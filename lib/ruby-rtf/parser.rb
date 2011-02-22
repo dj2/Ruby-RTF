@@ -89,14 +89,17 @@ module RubyRTF
       case(name)
       when :rtf then ;
       when :deff then doc.default_font = val
-
+      when *[:ansi, :mac, :pc, :pca] then doc.character_set = name
       when :fonttbl then current_pos = parse_font_table(src, current_pos, doc)
       when :colortbl then current_pos = parse_colour_table(src, current_pos, doc)
       when :stylesheet then current_pos = parse_stylesheet(src, current_pos, doc)
       when :info  then current_pos = parse_info(src, current_pos, doc)
       when :* then current_pos = parse_skip(src, current_pos, doc)
 
-      when *[:ansi, :mac, :pc, :pca] then doc.character_set = name
+      when :f then doc.current_section[:font] = doc.font_table[val]
+      # RTF font sizes are in half-points. divide by 2 to get points
+      when :fs then doc.current_section[:font_size] = (val.to_f / 2.0)
+
       else puts "Unknown control #{name} with #{val} at #{current_pos}"
       end
       current_pos
@@ -113,9 +116,7 @@ module RubyRTF
     def self.parse_font_table(src, current_pos, doc)
       group = 1
 
-      font_num = nil
       font = nil
-
       in_extra = nil
 
       while (true)
@@ -131,7 +132,7 @@ module RubyRTF
 
           if group == 1
             font.cleanup_names
-            doc.font_table[font_num] = font
+            doc.font_table[font.number] = font
           end
 
           in_extra = nil
@@ -142,7 +143,7 @@ module RubyRTF
           ctrl, val, current_pos = parse_control(src, current_pos + 1)
 
           case(ctrl)
-          when :f then font_num = val
+          when :f then font.number = val
           when :fprq then font.pitch = val
           when :fcharset then font.character_set = val
           when *[:flomajor, :fhimajor, :fdbmajor, :fbimajor,
