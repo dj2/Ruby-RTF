@@ -20,48 +20,13 @@ module RubyRTF
     # Creates a new document
     #
     # @return [RubyRTF::Document] The new document
-    def initialize(default_mods)
+    def initialize(sections)
       @font_table = []
       @colour_table = []
       @character_set = :ansi
       @default_font = 0
 
-      @sections = [{:text => '', :modifiers => default_mods}]
-    end
-
-    # Adds a new section to the document regardless if the current section is empty
-    #
-    # @return [Nil]
-    def add_section!(mods = {})
-      @sections << {:text => '', :modifiers => mods}
-    end
-
-    # Resets the current section to default formating
-    #
-    # @return [Nil]
-    def reset_current_section!
-      current_section[:modifiers].clear
-    end
-
-    # Reset the current section to default settings
-    #
-    # @return [Nil]
-    def reset_section!
-      current_section[:modifiers] = {}
-    end
-
-    # Removes the last section
-    #
-    # @return [Nil]
-    def remove_current_section!
-      sections.pop
-    end
-
-    # Retrieve the current section for the document
-    #
-    # @return [Hash] The document section data
-    def current_section
-      sections.last
+      @sections = sections
     end
 
     # Convert RubyRTF::Document to a string

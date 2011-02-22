@@ -6,8 +6,10 @@ module RubyRTF
 
     def initialize
       default_mods = {}
-      @doc = RubyRTF::Document.new(default_mods)
       @formatting_stack = [default_mods]
+      @section_stack = [[{:text => '', :modifiers => default_mods}]]
+
+      @doc = RubyRTF::Document.new(@section_stack.first)
     end
 
     # Parses a given string into an RubyRTF::Document
@@ -41,13 +43,13 @@ module RubyRTF
           group_level -= 1
 
         when *["\r", "\n"] then ;
-        else @doc.current_section[:text] << char
+        else current_section[:text] << char
         end
       end
 
       raise RubyRTF::InvalidDocument.new("Unbalanced {}s") unless group_level == 0
 
-      @doc.remove_current_section! if @doc.current_section[:text].empty?
+      remove_current_section! if current_section[:text].empty?
       @doc
     end
 
@@ -123,36 +125,36 @@ module RubyRTF
       when :scaps then add_section!(:smallcaps => true)
       when :cf then add_section!(:foreground_colour => @doc.colour_table[val])
       when :cb then add_section!(:background_colour => @doc.colour_table[val])
-      when :hex then @doc.current_section[:text] << val
+      when :hex then current_section[:text] << val
       when :u then
         char = if val > 0
           '\u' + val
         else
           '\u' + (val + 65_536).to_s
         end
-        @doc.current_section[:text] << char
+        current_section[:text] << char
 
       # force a new section so we can mark this as a [rl]quote section
       # but stick the ' in the text so it can be displayed easily
       when *[:rquote, :lquote] then
         force_section!(name => true)
-        @doc.current_section[:text] << "'"
+        current_section[:text] << "'"
         force_section!
 
       # force a new section so we can mark this as a [rl]dbquote section
       # but stick the " in the text so it can be displayed easily
       when *[:rdblquote, :ldblquote] then
         force_section!(name => true)
-        @doc.current_section[:text] << '"'
+        current_section[:text] << '"'
         force_section!
 
-      when :'{' then @doc.current_section[:text] << "{"
-      when :'}' then @doc.current_section[:text] << "}"
-      when :'\\' then @doc.current_section[:text] << '\\'
+      when :'{' then current_section[:text] << "{"
+      when :'}' then current_section[:text] << "}"
+      when :'\\' then current_section[:text] << '\\'
 
       when :tab then
         force_section!(:tab => true)
-        @doc.current_section[:text] << "\t"
+        current_section[:text] << "\t"
         pop_formatting!
 
         force_section!
@@ -160,7 +162,7 @@ module RubyRTF
 
       when :emdash then
         force_section!(:emdash => true)
-        @doc.current_section[:text] << "--"
+        current_section[:text] << "--"
         pop_formatting!
 
         force_section!
@@ -168,7 +170,7 @@ module RubyRTF
 
       when :endash then
         force_section!(:endash => true)
-        @doc.current_section[:text] << "-"
+        current_section[:text] << "-"
         pop_formatting!
 
         force_section!
@@ -176,7 +178,7 @@ module RubyRTF
 
       when *[:line, :'\n'] then
         force_section!(:newline => true)
-        @doc.current_section[:text] << "\n"
+        current_section[:text] << "\n"
         pop_formatting!
 
         force_section!
@@ -195,7 +197,7 @@ module RubyRTF
         force_section!
         pop_formatting!
 
-      when *[:pard, :plain] then @doc.reset_current_section!
+      when *[:pard, :plain] then reset_current_section!
 
       when :trowd then ;
       when :cell then ;
@@ -398,7 +400,7 @@ module RubyRTF
     BLACKLISTED = [:paragraph, :newline, :tab, :lquote, :rquote, :ldblquote, :rdblquote]
 
     def calc_current_modifiers(mods = {})
-      if @doc.current_section
+      if current_section
         formatting_stack.last.each_pair do |k, v|
           next if BLACKLISTED.include?(k)
           mods[k] = v
@@ -409,15 +411,40 @@ module RubyRTF
     end
 
     def add_section!(mods = {})
-      if @doc.current_section[:text].empty?
-        @doc.current_section[:modifiers].merge!(mods)
+      if current_section[:text].empty?
+        current_section[:modifiers].merge!(mods)
       else
         force_section!(mods)
       end
     end
 
     def force_section!(mods = {})
-      @doc.add_section!(calc_current_modifiers.merge(mods))
+      current_section_list << {:text => '', :modifiers => calc_current_modifiers.merge(mods)}
+    end
+
+    # Resets the current section to default formating
+    #
+    # @return [Nil]
+    def reset_current_section!
+      current_section[:modifiers].clear
+    end
+
+    # Removes the last section
+    #
+    # @return [Nil]
+    def remove_current_section!
+      current_section_list.pop
+    end
+
+    # Retrieve the current section for the document
+    #
+    # @return [Hash] The document section data
+    def current_section
+      current_section_list.last
+    end
+
+    def current_section_list
+      @section_stack.last
     end
 
     # Pop the current top element off the formatting stack.
