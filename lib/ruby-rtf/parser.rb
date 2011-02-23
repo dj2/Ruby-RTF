@@ -4,6 +4,8 @@ module RubyRTF
     # @return [Array] The current formatting block to use as the basis for new sections
     attr_reader :formatting_stack
 
+    attr_reader :doc
+
     def initialize
       default_mods = {}
       @formatting_stack = [default_mods]

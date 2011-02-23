@@ -1,61 +1,64 @@
 require 'spec_helper'
 
 describe RubyRTF::Parser do
+  let(:parser) { RubyRTF::Parser.new }
+  let(:doc) { parser.doc }
+
   it 'parses hello world' do
     src = '{\rtf1\ansi\deff0 {\fonttbl {\f0 Times New Roman;}}\f0 \fs60 Hello, World!}'
-    lambda { RubyRTF::Parser.parse(src) }.should_not raise_error
+    lambda { parser.parse(src) }.should_not raise_error
   end
 
   it 'returns a RTF::Document' do
     src = '{\rtf1\ansi\deff0 {\fonttbl {\f0 Times New Roman;}}\f0 \fs60 Hello, World!}'
-    doc = RubyRTF::Parser.parse(src)
-    doc.is_a?(RubyRTF::Document).should be_true
+    d = parser.parse(src)
+    d.is_a?(RubyRTF::Document).should be_true
   end
 
   it 'parses a default font (\deffN)' do
     src = '{\rtf1\ansi\deff10 {\fonttbl {\f10 Times New Roman;}}\f0 \fs60 Hello, World!}'
-    doc = RubyRTF::Parser.parse(src)
-    doc.default_font.should == 10
+    d = parser.parse(src)
+    d.default_font.should == 10
   end
 
   context 'invalid document' do
     it 'raises exception if \rtf is missing' do
       src = '{\ansi\deff0 {\fonttbl {\f0 Times New Roman;}}\f0 \fs60 Hello, World!}'
-      lambda { RubyRTF::Parser.parse(src) }.should raise_error(RubyRTF::InvalidDocument)
+      lambda { parser.parse(src) }.should raise_error(RubyRTF::InvalidDocument)
     end
 
     it 'raises exception if the document does not start with \rtf' do
       src = '{\ansi\deff0\rtf1 {\fonttbl {\f0 Times New Roman;}}\f0 \fs60 Hello, World!}'
-      lambda { RubyRTF::Parser.parse(src) }.should raise_error(RubyRTF::InvalidDocument)
+      lambda { parser.parse(src) }.should raise_error(RubyRTF::InvalidDocument)
     end
 
     it 'raises exception if the {}s are unbalanced' do
       src = '{\rtf1\ansi\deff0 {\fonttbl {\f0 Times New Roman;}\f0 \fs60 Hello, World!}'
-      lambda { RubyRTF::Parser.parse(src) }.should raise_error(RubyRTF::InvalidDocument)
+      lambda { parser.parse(src) }.should raise_error(RubyRTF::InvalidDocument)
     end
   end
 
   context '#parse' do
     it 'parses text into the current section' do
       src = '{\rtf1\ansi\deff10 {\fonttbl {\f10 Times New Roman;}}\f0 \fs60 Hello, World!}'
-      doc = RubyRTF::Parser.parse(src)
-      doc.sections.first[:text].should == 'Hello, World!'
+      d = parser.parse(src)
+      d.sections.first[:text].should == 'Hello, World!'
     end
 
     it 'adds a new section on {' do
       src = '{\rtf1 \fs60 Hello {\fs30 World}}'
-      doc = RubyRTF::Parser.parse(src)
-      doc.sections.first[:modifiers][:font_size].should == 30
-      doc.sections.first[:text].should == 'Hello '
+      d = parser.parse(src)
+      d.sections.first[:modifiers][:font_size].should == 30
+      d.sections.first[:text].should == 'Hello '
 
-      doc.sections.last[:modifiers][:font_size].should == 15
-      doc.sections.last[:text].should == 'World'
+      d.sections.last[:modifiers][:font_size].should == 15
+      d.sections.last[:text].should == 'World'
     end
 
     it 'adds a new section on }' do
       src = '{\rtf1 \fs60 Hello {\fs30 World}\fs12 Goodbye, cruel world.}'
-      doc = RubyRTF::Parser.parse(src)
-      section = doc.sections
+
+      section = parser.parse(src).sections
       section[0][:modifiers][:font_size].should == 30
       section[0][:text].should == 'Hello '
 
@@ -68,8 +71,8 @@ describe RubyRTF::Parser do
 
     it 'inherits properly over {} groups' do
       src = '{\rtf1 \b\fs60 Hello {\i\fs30 World}\ul Goodbye, cruel world.}'
-      doc = RubyRTF::Parser.parse(src)
-      section = doc.sections
+
+      section = parser.parse(src).sections
       section[0][:modifiers][:font_size].should == 30
       section[0][:modifiers][:bold].should be_true
       section[0][:modifiers].has_key?(:italic).should be_false
@@ -92,33 +95,33 @@ describe RubyRTF::Parser do
 
   context '#parse_control' do
     it 'parses a normal control' do
-      RubyRTF::Parser.parse_control("rtf")[0, 2].should == [:rtf, nil]
+      parser.parse_control("rtf")[0, 2].should == [:rtf, nil]
     end
 
     it 'parses a control with a value' do
-      RubyRTF::Parser.parse_control("f2")[0, 2].should == [:f, 2]
+      parser.parse_control("f2")[0, 2].should == [:f, 2]
     end
 
     context 'unicode' do
       %w(u21487* u21487).each do |code|
         it "parses #{code}" do
-          RubyRTF::Parser.parse_control(code)[0, 2].should == [:u, 21487]
+          parser.parse_control(code)[0, 2].should == [:u, 21487]
         end
       end
 
       %w(u-21487* u-21487).each do |code|
         it "parses #{code}" do
-          RubyRTF::Parser.parse_control(code)[0, 2].should == [:u, -21487]
+          parser.parse_control(code)[0, 2].should == [:u, -21487]
         end
       end
     end
 
     it 'parses a hex control' do
-      RubyRTF::Parser.parse_control("'7e")[0, 2].should == [:hex, '~']
+      parser.parse_control("'7e")[0, 2].should == [:hex, '~']
     end
 
     it 'parses a hex control with a string after it' do
-      ctrl, val, current_pos = RubyRTF::Parser.parse_control("'7e25")
+      ctrl, val, current_pos = parser.parse_control("'7e25")
       ctrl.should == :hex
       val.should == '~'
       current_pos.should == 3
@@ -126,20 +129,20 @@ describe RubyRTF::Parser do
 
     [' ', '{', '}', '\\', "\r", "\n"].each do |stop|
       it "stops at a #{stop}" do
-        RubyRTF::Parser.parse_control("rtf#{stop}test")[0, 2].should == [:rtf, nil]
+        parser.parse_control("rtf#{stop}test")[0, 2].should == [:rtf, nil]
       end
     end
 
     it 'handles a non-zero current position' do
-      RubyRTF::Parser.parse_control('Test ansi test', 5)[0, 2].should == [:ansi, nil]
+      parser.parse_control('Test ansi test', 5)[0, 2].should == [:ansi, nil]
     end
 
     it 'advances the current positon' do
-      RubyRTF::Parser.parse_control('Test ansi{test', 5).last.should == 9
+      parser.parse_control('Test ansi{test', 5).last.should == 9
     end
 
     it 'advances the current positon past the optional space' do
-      RubyRTF::Parser.parse_control('Test ansi test', 5).last.should == 10
+      parser.parse_control('Test ansi test', 5).last.should == 10
     end
   end
 
@@ -147,7 +150,7 @@ describe RubyRTF::Parser do
     %w(ansi mac pc pca).each do |type|
       it "accepts #{type}" do
         src = "{\\rtf1\\#{type}\\deff0 {\\fonttbl {\\f0 Times New Roman;}}\\f0 \\fs60 Hello, World!}"
-        doc = RubyRTF::Parser.parse(src)
+        doc = parser.parse(src)
         doc.character_set.should == type.to_sym
       end
     end
@@ -156,7 +159,7 @@ describe RubyRTF::Parser do
   context 'font table' do
     it 'sets the font table into the document' do
       src = '{\rtf1{\fonttbl{\f0\froman Times;}{\f1\fnil Arial;}}}'
-      doc = RubyRTF::Parser.parse(src)
+      doc = parser.parse(src)
 
       font = doc.font_table[0]
       font.family_command.should == :roman
@@ -164,11 +167,9 @@ describe RubyRTF::Parser do
     end
 
     context '#parse_font_table' do
-      let(:doc) { RubyRTF::Document.new }
-
       it 'parses a font table' do
         src = '{\f0\froman Times New Roman;}{\f1\fnil Arial;}}}'
-        RubyRTF::Parser.parse_font_table(src, 0, doc)
+        parser.parse_font_table(src, 0)
         tbl = doc.font_table
 
         tbl.length.should == 2
@@ -181,7 +182,7 @@ describe RubyRTF::Parser do
 
       it 'handles \r and \n in the font table' do
         src = "{\\f0\\froman Times New Roman;}\r{\\f1\\fnil Arial;}\n}}"
-        RubyRTF::Parser.parse_font_table(src, 0, doc)
+        parser.parse_font_table(src, 0)
         tbl = doc.font_table
 
         tbl.length.should == 2
@@ -194,7 +195,7 @@ describe RubyRTF::Parser do
 
       it 'the family command is optional' do
         src = '{\f0 Times New Roman;}}}'
-        RubyRTF::Parser.parse_font_table(src, 0, doc)
+        parser.parse_font_table(src, 0)
         tbl = doc.font_table
         tbl[0].family_command.should == :nil
         tbl[0].name.should == 'Times New Roman'
@@ -202,7 +203,7 @@ describe RubyRTF::Parser do
 
       it 'does not require the numbering to be incremental' do
         src = '{\f77\froman Times New Roman;}{\f3\fnil Arial;}}}'
-        RubyRTF::Parser.parse_font_table(src, 0, doc)
+        parser.parse_font_table(src, 0)
         tbl = doc.font_table
 
         tbl[77].family_command.should == :roman
@@ -214,7 +215,7 @@ describe RubyRTF::Parser do
 
       it 'accepts the \falt command' do
         src = '{\f0\froman Times New Roman{\*\falt Courier New};}}'
-        RubyRTF::Parser.parse_font_table(src, 0, doc)
+        parser.parse_font_table(src, 0)
         tbl = doc.font_table
         tbl[0].name.should == 'Times New Roman'
         tbl[0].alternate_name.should == 'Courier New'
@@ -222,12 +223,12 @@ describe RubyRTF::Parser do
 
       it 'sets current pos to the closing }' do
         src = '{\f0\froman Times New Roman{\*\falt Courier New};}}'
-        RubyRTF::Parser.parse_font_table(src, 0, doc).should == (src.length - 1)
+        parser.parse_font_table(src, 0).should == (src.length - 1)
       end
 
       it 'accepts the panose command' do
         src = '{\f0\froman\fcharset0\fprq2{\*\panose 02020603050405020304}Times New Roman{\*\falt Courier New};}}'
-        RubyRTF::Parser.parse_font_table(src, 0, doc)
+        parser.parse_font_table(src, 0)
         tbl = doc.font_table
         tbl[0].panose.should == '02020603050405020304'
         tbl[0].name.should == 'Times New Roman'
@@ -237,7 +238,7 @@ describe RubyRTF::Parser do
       %w(flomajor fhimajor fdbmajor fbimajor flominor fhiminor fdbminor fbiminor).each do |type|
         it "handles theme font type: #{type}" do
           src = "{\\f0\\#{type} Times New Roman;}}"
-          RubyRTF::Parser.parse_font_table(src, 0, doc)
+          parser.parse_font_table(src, 0)
           tbl = doc.font_table
           tbl[0].name.should == 'Times New Roman'
           tbl[0].theme.should == type[1..-1].to_sym
@@ -247,7 +248,7 @@ describe RubyRTF::Parser do
       [[0, :default], [1, :fixed], [2, :variable]].each do |pitch|
         it 'parses pitch information' do
           src = "{\\f0\\fprq#{pitch.first} Times New Roman;}}"
-          RubyRTF::Parser.parse_font_table(src, 0, doc)
+          parser.parse_font_table(src, 0)
           tbl = doc.font_table
           tbl[0].name.should == 'Times New Roman'
           tbl[0].pitch.should == pitch.last
@@ -256,7 +257,7 @@ describe RubyRTF::Parser do
 
       it 'parses the non-tagged font name' do
         src = '{\f0{\*\fname Arial;}Times New Roman;}}'
-        RubyRTF::Parser.parse_font_table(src, 0, doc)
+        parser.parse_font_table(src, 0)
         tbl = doc.font_table
         tbl[0].name.should == 'Times New Roman'
         tbl[0].non_tagged_name.should == 'Arial'
@@ -264,7 +265,7 @@ describe RubyRTF::Parser do
 
       it 'parses the charset' do
         src = '{\f0\fcharset87 Times New Roman;}}'
-        RubyRTF::Parser.parse_font_table(src, 0, doc)
+        parser.parse_font_table(src, 0)
         tbl = doc.font_table
         tbl[0].name.should == 'Times New Roman'
         tbl[0].character_set.should == 87
@@ -275,7 +276,7 @@ describe RubyRTF::Parser do
   context 'colour table' do
     it 'sets the colour table into the document' do
       src = '{\rtf1{\colortbl\red0\green0\blue0;\red127\green2\blue255;}}'
-      doc = RubyRTF::Parser.parse(src)
+      doc = parser.parse(src)
 
       clr = doc.colour_table[0]
       clr.red.should == 0
@@ -290,7 +291,7 @@ describe RubyRTF::Parser do
 
     it 'sets the first colour if missing' do
       src = '{\rtf1{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}}'
-      doc = RubyRTF::Parser.parse(src)
+      doc = parser.parse(src)
 
       clr = doc.colour_table[0]
       clr.use_default?.should be_true
@@ -302,11 +303,9 @@ describe RubyRTF::Parser do
     end
 
     context '#parse_colour_table' do
-      let(:doc) { RubyRTF::Document.new }
-
       it 'parses \red \green \blue' do
         src = '\red2\green55\blue23;}'
-        RubyRTF::Parser.parse_colour_table(src, 0, doc)
+        parser.parse_colour_table(src, 0)
         tbl = doc.colour_table
         tbl[0].red.should == 2
         tbl[0].green.should == 55
@@ -315,14 +314,14 @@ describe RubyRTF::Parser do
 
       it 'handles ctintN' do
         src = '\ctint22\red2\green55\blue23;}'
-        RubyRTF::Parser.parse_colour_table(src, 0, doc)
+        parser.parse_colour_table(src, 0)
         tbl = doc.colour_table
         tbl[0].tint.should == 22
       end
 
       it 'handles cshadeN' do
         src = '\cshade11\red2\green55\blue23;}'
-        RubyRTF::Parser.parse_colour_table(src, 0, doc)
+        parser.parse_colour_table(src, 0)
         tbl = doc.colour_table
         tbl[0].shade.should == 11
       end
@@ -333,7 +332,7 @@ describe RubyRTF::Parser do
          cbackgroundtwo ctexttwo).each do |theme|
         it "it allows theme item #{theme}" do
           src = "\\#{theme}\\red11\\green22\\blue33;}"
-          RubyRTF::Parser.parse_colour_table(src, 0, doc)
+          parser.parse_colour_table(src, 0)
           tbl = doc.colour_table
           tbl[0].theme.should == theme[1..-1].to_sym
         end
@@ -341,7 +340,7 @@ describe RubyRTF::Parser do
 
       it 'handles \r and \n' do
         src = "\\cshade11\\red2\\green55\r\n\\blue23;}"
-        RubyRTF::Parser.parse_colour_table(src, 0, doc)
+        parser.parse_colour_table(src, 0)
         tbl = doc.colour_table
         tbl[0].shade.should == 11
         tbl[0].red.should == 2
@@ -360,174 +359,245 @@ describe RubyRTF::Parser do
   end
 
   context '#handle_control' do
-    let(:doc) { RubyRTF::Document.new }
-
-    it 'sets the font' do
+     it 'sets the font' do
       font = RubyRTF::Font.new('Times New Roman')
       doc.font_table[0] = font
 
-      RubyRTF::Parser.handle_control(:f, 0, nil, 0, doc)
-      doc.current_section[:modifiers][:font].should == font
+      parser.handle_control(:f, 0, nil, 0)
+      parser.current_section[:modifiers][:font].should == font
     end
 
     it 'sets the font size' do
-      RubyRTF::Parser.handle_control(:fs, 61, nil, 0, doc)
-      doc.current_section[:modifiers][:font_size].should == 30.5
+      parser.handle_control(:fs, 61, nil, 0)
+      parser.current_section[:modifiers][:font_size].should == 30.5
     end
 
     it 'sets bold' do
-      RubyRTF::Parser.handle_control(:b, nil, nil, 0, doc)
-      doc.current_section[:modifiers][:bold].should be_true
+      parser.handle_control(:b, nil, nil, 0)
+      parser.current_section[:modifiers][:bold].should be_true
     end
 
     it 'sets underline' do
-      RubyRTF::Parser.handle_control(:ul, nil, nil, 0, doc)
-      doc.current_section[:modifiers][:underline].should be_true
+      parser.handle_control(:ul, nil, nil, 0)
+      parser.current_section[:modifiers][:underline].should be_true
     end
 
     it 'sets italic' do
-      RubyRTF::Parser.handle_control(:i, nil, nil, 0, doc)
-      doc.current_section[:modifiers][:italic].should be_true
+      parser.handle_control(:i, nil, nil, 0)
+      parser.current_section[:modifiers][:italic].should be_true
     end
 
     %w(rquote lquote).each do |quote|
       it "sets a #{quote}" do
-        doc.current_section[:text] = 'My code'
-        RubyRTF::Parser.handle_control(quote.to_sym, nil, nil, 0, doc)
-        doc.remove_current_section!
-        doc.current_section[:text].should == "'"
-        doc.current_section[:modifiers][quote.to_sym].should be_true
+        parser.current_section[:text] = 'My code'
+        parser.handle_control(quote.to_sym, nil, nil, 0)
+        parser.remove_current_section!
+        parser.current_section[:text].should == "'"
+        parser.current_section[:modifiers][quote.to_sym].should be_true
       end
     end
 
     %w(rdblquote ldblquote).each do |quote|
       it "sets a #{quote}" do
-        doc.current_section[:text] = 'My code'
-        RubyRTF::Parser.handle_control(quote.to_sym, nil, nil, 0, doc)
-        doc.remove_current_section!
-        doc.current_section[:text].should == '"'
-        doc.current_section[:modifiers][quote.to_sym].should be_true
+        parser.current_section[:text] = 'My code'
+        parser.handle_control(quote.to_sym, nil, nil, 0)
+        parser.remove_current_section!
+        parser.current_section[:text].should == '"'
+        parser.current_section[:modifiers][quote.to_sym].should be_true
       end
     end
 
     it 'sets a hex character' do
-      doc.current_section[:text] = 'My code'
-      RubyRTF::Parser.handle_control(:hex, '~', nil, 0, doc)
-      doc.current_section[:text].should == 'My code~'
+      parser.current_section[:text] = 'My code'
+      parser.handle_control(:hex, '~', nil, 0)
+      parser.current_section[:text].should == 'My code~'
     end
 
     context 'new line' do
       ['line', '\n'].each do |type|
         it "sets from #{type}" do
-          doc.current_section[:text] = "end."
-          RubyRTF::Parser.handle_control(type.to_sym, nil, nil, 0, doc)
-          doc.remove_current_section!
-          doc.current_section[:modifiers][:newline].should be_true
-          doc.current_section[:text].should == "\n"
+          parser.current_section[:text] = "end."
+          parser.handle_control(type.to_sym, nil, nil, 0)
+          parser.remove_current_section!
+          parser.current_section[:modifiers][:newline].should be_true
+          parser.current_section[:text].should == "\n"
         end
       end
 
       it 'ignores \r' do
-        doc.current_section[:text] = "end."
-        RubyRTF::Parser.handle_control(:'\r', nil, nil, 0, doc)
-        doc.current_section[:text].should == "end."
+        parser.current_section[:text] = "end."
+        parser.handle_control(:'\r', nil, nil, 0)
+        parser.current_section[:text].should == "end."
       end
     end
 
     it 'inserts a \tab' do
-      doc.current_section[:text] = "end."
-      RubyRTF::Parser.handle_control(:tab, nil, nil, 0, doc)
-      doc.remove_current_section!
-      doc.current_section[:modifiers][:tab].should be_true
-      doc.current_section[:text].should == "\t"
+      parser.current_section[:text] = "end."
+      parser.handle_control(:tab, nil, nil, 0)
+      parser.remove_current_section!
+      parser.current_section[:modifiers][:tab].should be_true
+      parser.current_section[:text].should == "\t"
     end
 
     it 'inserts a \super' do
-      doc.current_section[:text] = "end."
-      RubyRTF::Parser.handle_control(:super, nil, nil, 0, doc)
+      parser.current_section[:text] = "end."
+      parser.handle_control(:super, nil, nil, 0)
 
-      doc.current_section[:modifiers][:superscript].should be_true
-      doc.current_section[:text].should == ""
+      parser.current_section[:modifiers][:superscript].should be_true
+      parser.current_section[:text].should == ""
     end
 
     it 'inserts a \sub' do
-      doc.current_section[:text] = "end."
-      RubyRTF::Parser.handle_control(:sub, nil, nil, 0, doc)
+      parser.current_section[:text] = "end."
+      parser.handle_control(:sub, nil, nil, 0)
 
-      doc.current_section[:modifiers][:subscript].should be_true
-      doc.current_section[:text].should == ""
+      parser.current_section[:modifiers][:subscript].should be_true
+      parser.current_section[:text].should == ""
     end
 
     it 'inserts a \strike' do
-      doc.current_section[:text] = "end."
-      RubyRTF::Parser.handle_control(:strike, nil, nil, 0, doc)
+      parser.current_section[:text] = "end."
+      parser.handle_control(:strike, nil, nil, 0)
 
-      doc.current_section[:modifiers][:strikethrough].should be_true
-      doc.current_section[:text].should == ""
+      parser.current_section[:modifiers][:strikethrough].should be_true
+      parser.current_section[:text].should == ""
     end
 
     it 'inserts a \scaps' do
-      doc.current_section[:text] = "end."
-      RubyRTF::Parser.handle_control(:scaps, nil, nil, 0, doc)
+      parser.current_section[:text] = "end."
+      parser.handle_control(:scaps, nil, nil, 0)
 
-      doc.current_section[:modifiers][:smallcaps].should be_true
-      doc.current_section[:text].should == ""
+      parser.current_section[:modifiers][:smallcaps].should be_true
+      parser.current_section[:text].should == ""
     end
 
     it 'inserts an \emdash' do
-      doc.current_section[:text] = "end."
-      RubyRTF::Parser.handle_control(:emdash, nil, nil, 0, doc)
-      doc.remove_current_section!
-      doc.current_section[:modifiers][:emdash].should be_true
-      doc.current_section[:text].should == "--"
+      parser.current_section[:text] = "end."
+      parser.handle_control(:emdash, nil, nil, 0)
+      parser.remove_current_section!
+      parser.current_section[:modifiers][:emdash].should be_true
+      parser.current_section[:text].should == "--"
     end
 
     it 'inserts an \endash' do
-      doc.current_section[:text] = "end."
-      RubyRTF::Parser.handle_control(:endash, nil, nil, 0, doc)
-      doc.remove_current_section!
-      doc.current_section[:modifiers][:endash].should be_true
-      doc.current_section[:text].should == "-"
+      parser.current_section[:text] = "end."
+      parser.handle_control(:endash, nil, nil, 0)
+      parser.remove_current_section!
+      parser.current_section[:modifiers][:endash].should be_true
+      parser.current_section[:text].should == "-"
     end
 
     context 'escapes' do
       ['{', '}', '\\'].each do |escape|
         it "inserts an escaped #{escape}" do
-          doc.current_section[:text] = "end."
-          RubyRTF::Parser.handle_control(escape.to_sym, nil, nil, 0, doc)
-          doc.current_section[:text].should == "end.#{escape}"
+          parser.current_section[:text] = "end."
+          parser.handle_control(escape.to_sym, nil, nil, 0)
+          parser.current_section[:text].should == "end.#{escape}"
         end
       end
     end
 
     it 'adds a new section for a par command' do
-      doc.current_section[:text] = 'end.'
-      RubyRTF::Parser.handle_control(:par, nil, nil, 0, doc)
-      doc.current_section[:text].should == ""
+      parser.current_section[:text] = 'end.'
+      parser.handle_control(:par, nil, nil, 0)
+      parser.current_section[:text].should == ""
     end
 
     %w(pard plain).each do |type|
       it "resets the current sections information to default for #{type}" do
-        doc.current_section[:modifiers][:bold] = true
-        doc.current_section[:modifiers][:italic] = true
-        RubyRTF::Parser.handle_control(type.to_sym, nil, nil, 0, doc)
+        parser.current_section[:modifiers][:bold] = true
+        parser.current_section[:modifiers][:italic] = true
+        parser.handle_control(type.to_sym, nil, nil, 0)
 
-        doc.current_section[:modifiers].has_key?(:bold).should be_false
-        doc.current_section[:modifiers].has_key?(:italic).should be_false
+        parser.current_section[:modifiers].has_key?(:bold).should be_false
+        parser.current_section[:modifiers].has_key?(:italic).should be_false
       end
     end
 
     context 'colour' do
       it 'sets the foreground colour' do
         doc.colour_table << RubyRTF::Colour.new(255, 0, 255)
-        RubyRTF::Parser.handle_control(:cf, 0, nil, 0, doc)
-        doc.current_section[:modifiers][:foreground_colour].to_s.should == "[255, 0, 255]"
+        parser.handle_control(:cf, 0, nil, 0)
+        parser.current_section[:modifiers][:foreground_colour].to_s.should == "[255, 0, 255]"
       end
 
       it 'sets the background colour' do
         doc.colour_table << RubyRTF::Colour.new(255, 0, 255)
-        RubyRTF::Parser.handle_control(:cb, 0, nil, 0, doc)
-        doc.current_section[:modifiers][:background_colour].to_s.should == "[255, 0, 255]"
+        parser.handle_control(:cb, 0, nil, 0)
+        parser.current_section[:modifiers][:background_colour].to_s.should == "[255, 0, 255]"
+      end
+    end
+  end
+
+
+  context 'sections' do
+    it 'has sections' do
+      parser.current_section_list.should_not be_nil
+    end
+
+    it 'sets an initial section' do
+      parser.current_section.should_not be_nil
+    end
+
+    context '#add_section!' do
+      it 'does not add a section if the current :text is empty' do
+        d = parser
+        d.add_section!
+        d.current_section_list.length.should == 1
+      end
+
+      it 'adds a section of the current section has text' do
+        d = parser
+        d.current_section[:text] = "Test"
+        d.add_section!
+        d.current_section_list.length.should == 2
+      end
+
+      it 'inherits the modifiers from the parent section' do
+        d = parser
+        d.current_section[:modifiers][:bold] = true
+        d.current_section[:modifiers][:italics] = true
+        d.current_section[:text] = "New text"
+
+        d.add_section!
+
+        d.current_section[:modifiers][:underline] = true
+
+        sections = d.current_section_list
+        sections.first[:modifiers].should == {:bold => true, :italics => true}
+        sections.last[:modifiers].should == {:bold => true, :italics => true, :underline => true}
+      end
+    end
+
+    context '#reset_current_section!' do
+      it 'resets the current sections modifiers' do
+        d = parser
+        d.current_section[:modifiers] = {:bold => true, :italics => true}
+        d.current_section[:text] = "New text"
+
+        d.add_section!
+        d.reset_current_section!
+        d.current_section[:modifiers][:underline] = true
+
+        sections = d.current_section_list
+        sections.first[:modifiers].should == {:bold => true, :italics => true}
+        sections.last[:modifiers].should == {:underline => true}
+      end
+    end
+
+    context '#remove_last_section!' do
+      it 'removes the last section' do
+        d = parser
+        d.current_section[:modifiers] = {:bold => true, :italics => true}
+        d.current_section[:text] = "New text"
+
+        d.add_section!
+
+        d.current_section[:modifiers][:underline] = true
+
+        d.remove_current_section!
+        d.current_section_list.length.should == 1
+        d.current_section_list.first[:text].should == 'New text'
       end
     end
   end
