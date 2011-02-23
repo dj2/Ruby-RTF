@@ -180,6 +180,13 @@ describe RubyRTF::Parser do
         tbl[1].name.should == 'Arial'
       end
 
+      it 'parses a font table without braces' do
+        src = '\f0\froman\fcharset0 TimesNewRomanPSMT;}}'
+        parser.parse_font_table(src, 0)
+        tbl = doc.font_table
+        tbl[0].name.should == 'TimesNewRomanPSMT'
+      end
+
       it 'handles \r and \n in the font table' do
         src = "{\\f0\\froman Times New Roman;}\r{\\f1\\fnil Arial;}\n}}"
         parser.parse_font_table(src, 0)

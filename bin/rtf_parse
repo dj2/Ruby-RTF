@@ -11,16 +11,11 @@ def add(open, close = open)
   @suffix = "</#{close}>#{@suffix}"
 end
 
-doc = RubyRTF::Parser.new.parse(File.open(ARGV[0]).read)
-
-STDERR.puts doc
-
-str = '<html><body>'
-doc.sections.each do |section|
-  mods = section[:modifiers]
-
+def format(str, section)
   @prefix = ''
   @suffix = ''
+
+  mods = section[:modifiers]
 
   if mods[:paragraph]
     if section[:text].empty?
@@ -31,31 +26,31 @@ doc.sections.each do |section|
 
   elsif mods[:tab]
     str << "&nbsp;&nbsp;&nbsp;&nbsp;"
-    next
+    return
   elsif mods[:newline]
     str << "<br />\n"
-    next
+    return
   elsif mods[:rquote]
     str << "&rsquo;"
-    next
+    return
   elsif mods[:lquote]
     str << "&lsquo;"
-    next
+    return
   elsif mods[:ldblquote]
     str << "&ldquo;"
-    next
+    return
   elsif mods[:rdblquote]
     str << "&rdquo;"
-    next
+    return
   elsif mods[:emdash]
     str << "&mdash;"
-    next
+    return
   elsif mods[:endash]
     str << "&ndash;"
-    next
+    return
   end
 
-  next if section[:text].empty?
+  return if section[:text].empty?
 
   add('b') if mods[:bold]
   add('i') if mods[:italic]
@@ -80,6 +75,32 @@ doc.sections.each do |section|
   add("span style='#{style}'", 'span') unless style.empty?
 
   str << @prefix + section[:text] + @suffix
+end
+
+doc = RubyRTF::Parser.new.parse(File.open(ARGV[0]).read)
+
+STDERR.puts doc
+
+str = '<html><body>'
+doc.sections.each do |section|
+  mods = section[:modifiers]
+
+  if mods[:table]
+    str << "<table>\n"
+    mods[:table].rows.each do |row|
+      str << "<tr>\n"
+      row.each do |cell|
+        str << "<td>\n"
+        format(str, cell)
+        str << "</td>\n"
+      end
+      str << "</tr>\n"
+    end
+    str << "</table>\n"
+    next
+  end
+
+  format(str, section)
 end
 
 str << "</body></html>"

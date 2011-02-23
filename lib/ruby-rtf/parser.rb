@@ -55,6 +55,8 @@ module RubyRTF
       @doc
     end
 
+    STOP_CHARS = [' ', '\\', '{', '}', "\r", "\n", ';']
+
     # Parses a control switch
     #
     # @param src [String] The fragment to parse
@@ -78,15 +80,16 @@ module RubyRTF
 
       while (true)
         break if current_pos >= max_len
-        break if [' ', '\\', '{', '}', "\r", "\n", ';'].include?(src[current_pos])
+        break if STOP_CHARS.include?(src[current_pos])
 
         current_pos += 1
       end
-      contents = src[start, current_pos - start]
+      return [src[current_pos].to_sym, nil, current_pos + 1] if start == current_pos
 
+      contents = src[start, current_pos - start]
       m = contents.match(/([\*a-z]+)(\-?\d+)?\*?/)
       ctrl = m[1].to_sym
-      val = m[2].to_i unless $2.nil?
+      val = m[2].to_i unless m[2].nil?
 
       # we advance past the optional space if present
       current_pos += 1 if src[current_pos] == ' '
@@ -104,6 +107,11 @@ module RubyRTF
     #
     # @api private
     def handle_control(name, val, src, current_pos)
+      if @table_row_done && (name != :trowd && !((name == :itap) && (val > 0)))
+        force_section!
+        @table_row_done = false
+      end
+
       case(name)
       when :rtf then ;
       when :deff then @doc.default_font = val
@@ -147,18 +155,53 @@ module RubyRTF
       when :emdash then add_modifier_section({:emdash => true}, "--")
       when :endash then add_modifier_section({:endash => true}, "-")
 
-      when *[:line, :'\n'] then add_modifier_section({:newline => true}, "\n")
-      when :'\r' then ;
+      when *[:line, :"\n"] then add_modifier_section({:newline => true}, "\n")
+      when :"\r" then ;
 
       when :par then add_modifier_section({:paragraph => true})
       when *[:pard, :plain] then reset_current_section!
 
-      when :trowd then ;
-      when :cell then ;
-      when :row then ;
-      when :intbl then ;
+      when :trowd then
+        section = @section_stack.last
 
-      else STDERR.puts "Unknown control #{name} with #{val} at #{current_pos}"
+        # if we are currently in a table
+        if section && section.last[:modifiers][:table]
+          table = section.last[:modifiers][:table]
+          table.add_row
+
+          @section_stack.push(table.rows.last)
+          force_section!
+        else
+          table = RubyRTF::Table.new
+          add_section!(:table => table)
+
+          @section_stack.push(table.rows.last)
+          force_section!
+        end
+
+      when :itap then ;
+
+      when :cell then
+        add_section!
+      when :row then
+        @section_stack.pop
+        @table_row_done = true
+
+      when :intbl then
+#         prev = remove_current_section!
+#         @section_stack.pop
+# STDERR.puts "IN TABLE ROW"
+#
+# STDERR.puts @section_stack
+#
+#         table = current_section[:modifiers][:table]
+#         table.add_row
+#
+#         @section_stack.push(table.rows.last)
+#         force_section!(prev[:modifiers])
+;
+
+      else STDERR.puts "Unknown control #{name.inspect} with #{val} at #{current_pos}"
       end
       current_pos
     end
@@ -187,7 +230,7 @@ module RubyRTF
         when '}' then
           group -= 1
 
-          if group == 1
+          if group <= 1
             font.cleanup_names
             @doc.font_table[font.number] = font
           end
@@ -198,6 +241,8 @@ module RubyRTF
 
         when '\\' then
           ctrl, val, current_pos = parse_control(src, current_pos + 1)
+
+          font = RubyRTF::Font.new if font.nil?
 
           case(ctrl)
           when :f then font.number = val
