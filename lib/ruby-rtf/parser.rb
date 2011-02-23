@@ -136,69 +136,21 @@ module RubyRTF
         end
         current_section[:text] << char
 
-      # force a new section so we can mark this as a [rl]quote section
-      # but stick the ' in the text so it can be displayed easily
-      when *[:rquote, :lquote] then
-        force_section!(name => true)
-        current_section[:text] << "'"
-        force_section!
-
-      # force a new section so we can mark this as a [rl]dbquote section
-      # but stick the " in the text so it can be displayed easily
-      when *[:rdblquote, :ldblquote] then
-        force_section!(name => true)
-        current_section[:text] << '"'
-        force_section!
+      when *[:rquote, :lquote] then add_modifier_section({name => true}, "'")
+      when *[:rdblquote, :ldblquote] then add_modifier_section({name => true}, '"')
 
       when :'{' then current_section[:text] << "{"
       when :'}' then current_section[:text] << "}"
       when :'\\' then current_section[:text] << '\\'
 
-      when :tab then
-        force_section!(:tab => true)
-        current_section[:text] << "\t"
-        pop_formatting!
+      when :tab then add_modifier_section({:tab => true}, "\t")
+      when :emdash then add_modifier_section({:emdash => true}, "--")
+      when :endash then add_modifier_section({:endash => true}, "-")
 
-        force_section!
-        pop_formatting!
-
-      when :emdash then
-        force_section!(:emdash => true)
-        current_section[:text] << "--"
-        pop_formatting!
-
-        force_section!
-        pop_formatting!
-
-      when :endash then
-        force_section!(:endash => true)
-        current_section[:text] << "-"
-        pop_formatting!
-
-        force_section!
-        pop_formatting!
-
-      when *[:line, :'\n'] then
-        force_section!(:newline => true)
-        current_section[:text] << "\n"
-        pop_formatting!
-
-        force_section!
-        pop_formatting!
-
+      when *[:line, :'\n'] then add_modifier_section({:newline => true}, "\n")
       when :'\r' then ;
 
-      when :par then
-        # force a fake section for the paragraph and then remove it
-        # from the formatting stack. We then add a new section after the paragraph
-        # which we also remove from the stack. Any new switches will for an
-        # add_group which will add a new section
-        force_section!(:paragraph => true)
-        pop_formatting!
-
-        force_section!
-        pop_formatting!
-
+      when :par then add_modifier_section({:paragraph => true})
       when *[:pard, :plain] then reset_current_section!
 
       when :trowd then ;
@@ -410,6 +362,15 @@ module RubyRTF
       end
       formatting_stack.push(mods)
       mods
+    end
+
+    def add_modifier_section(mods = {}, text = nil)
+      force_section!(mods)
+      current_section[:text] << text if text
+      pop_formatting!
+
+      force_section!
+      pop_formatting!
     end
 
     def add_section!(mods = {})
