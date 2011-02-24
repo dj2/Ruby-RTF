@@ -107,11 +107,6 @@ module RubyRTF
     #
     # @api private
     def handle_control(name, val, src, current_pos)
-      if @table_row_done && (name != :trowd && !((name == :itap) && (val > 0)))
-        force_section!
-        @table_row_done = false
-      end
-
       case(name)
       when :rtf then ;
       when :deff then @doc.default_font = val
@@ -160,46 +155,6 @@ module RubyRTF
 
       when :par then add_modifier_section({:paragraph => true})
       when *[:pard, :plain] then reset_current_section!
-
-      when :trowd then
-        section = @section_stack.last
-
-        # if we are currently in a table
-        if section && section.last[:modifiers][:table]
-          table = section.last[:modifiers][:table]
-          table.add_row
-
-          @section_stack.push(table.rows.last)
-          force_section!
-        else
-          table = RubyRTF::Table.new
-          add_section!(:table => table)
-
-          @section_stack.push(table.rows.last)
-          force_section!
-        end
-
-      when :itap then ;
-
-      when :cell then
-        add_section!
-      when :row then
-        @section_stack.pop
-        @table_row_done = true
-
-      when :intbl then
-#         prev = remove_current_section!
-#         @section_stack.pop
-# STDERR.puts "IN TABLE ROW"
-#
-# STDERR.puts @section_stack
-#
-#         table = current_section[:modifiers][:table]
-#         table.add_row
-#
-#         @section_stack.push(table.rows.last)
-#         force_section!(prev[:modifiers])
-;
 
       else STDERR.puts "Unknown control #{name.inspect} with #{val} at #{current_pos}"
       end
