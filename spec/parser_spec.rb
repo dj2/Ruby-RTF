@@ -607,5 +607,29 @@ describe RubyRTF::Parser do
         d.current_section_list.first[:text].should == 'New text'
       end
     end
+
+    context 'tables' do
+      it 'parses a single row/column table' do
+        src = '{\rtf1 Before Table\trowd\trgraph180\cellx1440\pard\intbl fee.\cell\row After table}'
+        d = parser.parse(src)
+
+        sect = d.sections
+        sect.length.should == 3
+        sect[0][:text].should == 'Before Table'
+        sect[2][:text].should == 'After table'
+
+        sect[1][:modifiers][:table].should_not be_nil
+        table = sect[1][:modifiers][:table]
+
+        table.rows.length.should == 1
+
+        cells = table.rows[0].cells
+        cells.first.should == 1440
+
+        sect = table.rows[0].sections
+        sect.length.should == 1
+        sect[0][:text].should == 'fee.'
+      end
+    end
   end
 end

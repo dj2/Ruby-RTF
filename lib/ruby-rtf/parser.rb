@@ -156,6 +156,23 @@ module RubyRTF
       when :par then add_modifier_section({:paragraph => true})
       when *[:pard, :plain] then reset_current_section!
 
+      when :trowd then
+        table = RubyRTF::Table.new
+        add_modifier_section(:table => table)
+        @section_stack.push(table.current_row.sections)
+
+      when :trgraph then
+        raise "trgraph outside of a table?" if !current_section[:modifiers][:row]
+        current_section[:modifiers][:row].table.half_gap = val
+
+      when :cellx then
+        raise "cellx outside of a table?" if !current_section[:modifiers][:row]
+        current_section[:modifiers][:row].cells.push(val)
+
+      when :intbl then ;
+      when :cell then ;
+      when :row then @section_stack.pop
+
       else STDERR.puts "Unknown control #{name.inspect} with #{val} at #{current_pos}"
       end
       current_pos
