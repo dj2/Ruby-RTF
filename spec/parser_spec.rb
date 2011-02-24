@@ -421,7 +421,7 @@ describe RubyRTF::Parser do
     end
 
     context 'new line' do
-      ['line', '\n'].each do |type|
+      ['line', "\n"].each do |type|
         it "sets from #{type}" do
           parser.current_section[:text] = "end."
           parser.handle_control(type.to_sym, nil, nil, 0)
@@ -433,7 +433,7 @@ describe RubyRTF::Parser do
 
       it 'ignores \r' do
         parser.current_section[:text] = "end."
-        parser.handle_control(:'\r', nil, nil, 0)
+        parser.handle_control(:"\r", nil, nil, 0)
         parser.current_section[:text].should == "end."
       end
     end
