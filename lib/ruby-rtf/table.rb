@@ -20,11 +20,11 @@ module RubyRTF
     end
 
     class Row
-      attr_accessor :table, :widths, :cells
+      attr_accessor :table, :end_positions, :cells
 
       def initialize(table)
         @table = table
-        @widths = []
+        @end_positions = []
         @cells = []
         add_cell
       end

@@ -606,9 +606,9 @@ describe RubyRTF::Parser do
         table.rows.length.should == data.length
 
         data.each_with_index do |row, idx|
-          widths = table.rows[idx].widths
-          row[:widths].each_with_index do |size, cidx|
-            widths[cidx].should == size
+          end_positions = table.rows[idx].end_positions
+          row[:end_positions].each_with_index do |size, cidx|
+            end_positions[cidx].should == size
           end
 
           cells = table.rows[idx].cells
@@ -638,7 +638,7 @@ describe RubyRTF::Parser do
         sect[1][:modifiers][:table].should_not be_nil
         table = sect[1][:modifiers][:table]
 
-        compare_table_results(table, [{:widths => [72], :values => [['fee.']]}])
+        compare_table_results(table, [{:end_positions => [72], :values => [['fee.']]}])
       end
 
       it 'parses a \trgaph180' do
@@ -681,7 +681,7 @@ describe RubyRTF::Parser do
         sect[1][:modifiers][:table].should_not be_nil
         table = sect[1][:modifiers][:table]
 
-        compare_table_results(table, [{:widths => [72, 144, 50], :values => [['fee.'], ['fie.'], ['foe.']]}])
+        compare_table_results(table, [{:end_positions => [72, 144, 50], :values => [['fee.'], ['fie.'], ['foe.']]}])
       end
 
       it 'parses multiple rows and multiple columns' do
@@ -705,8 +705,8 @@ describe RubyRTF::Parser do
         sect[1][:modifiers][:table].should_not be_nil
         table = sect[1][:modifiers][:table]
 
-        compare_table_results(table, [{:widths => [72, 144, 50], :values => [['fee.'], ['fie.'], ['foe.']]},
-                                      {:widths => [50, 72, 144], :values => [['foo.'], ['bar.'], ['baz.']]}])
+        compare_table_results(table, [{:end_positions => [72, 144, 50], :values => [['fee.'], ['fie.'], ['foe.']]},
+                                      {:end_positions => [50, 72, 144], :values => [['foo.'], ['bar.'], ['baz.']]}])
       end
 
       it 'parses a grouped table' do
@@ -730,8 +730,8 @@ describe RubyRTF::Parser do
         sect[1][:modifiers][:table].should_not be_nil
         table = sect[1][:modifiers][:table]
 
-        compare_table_results(table, [{:widths => [72, 144, 50], :values => [['fee.'], ['fie.'], ['foe.']]},
-                                      {:widths => [50, 72, 144], :values => [['foo.'], ['bar.'], ['baz.']]}])
+        compare_table_results(table, [{:end_positions => [72, 144, 50], :values => [['fee.'], ['fie.'], ['foe.']]},
+                                      {:end_positions => [50, 72, 144], :values => [['foo.'], ['bar.'], ['baz.']]}])
       end
 
       it 'parses a new line inside a table cell' do
@@ -747,7 +747,7 @@ describe RubyRTF::Parser do
         sect[2][:text].should == 'After table'
         table = sect[1][:modifiers][:table]
 
-        compare_table_results(table, [{:widths => [72], :values => [["fee.", "\n", "fie."]]}])
+        compare_table_results(table, [{:end_positions => [72], :values => [["fee.", "\n", "fie."]]}])
       end
 
       it 'parses a new line inside a table cell' do
@@ -765,22 +765,27 @@ describe RubyRTF::Parser do
         sect[2][:text].should == 'After table'
         table = sect[1][:modifiers][:table]
 
-        compare_table_results(table, [{:widths => [72, 144, 50], :values => [["fee."], [""], ["fie."]]}])
+        compare_table_results(table, [{:end_positions => [72, 144, 50], :values => [["fee."], [""], ["fie."]]}])
       end
 
       it 'parses a grouped cell' do
-        src = '{\rtf1\trowd \pard {\fs20 Familiar }{\cell }{\fs20 Alignment }{\cell }\pard \intbl {\fs20 Arcane Spellcaster Level}{\cell }\pard {\b\fs18 \trowd \trgaph108\trleft-108\row }}'
+        pending
+
+        src = '{\rtf1\trowd \pard ' +
+                '{\fs20 Familiar }{\cell }' +
+                '{\fs20 Alignment }{\cell }' +
+                '\pard \intbl {\fs20 Arcane Spellcaster Level}{\cell }' +
+                '\pard {\b\fs18 \trowd \trgaph108\trleft-108\row }}'
         d = parser.parse(src)
 
         sect = d.sections
-pp sect
 
         sect.length.should == 3
         sect[0][:text].should == 'Before Table'
         sect[2][:text].should == 'After table'
         table = sect[1][:modifiers][:table]
-pp table
-        compare_table_results(table, [{:widths => [72, 144], :values => [["fee."], ["fie."]]}])
+
+        compare_table_results(table, [{:end_positions => [72, 144], :values => [["fee."], ["fie."]]}])
       end
     end
   end

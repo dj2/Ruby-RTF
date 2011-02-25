@@ -192,7 +192,7 @@ module RubyRTF
 
       when :cellx then
         raise "cellx outside of a table?" if !current_section[:modifiers][:row]
-        current_section[:modifiers][:row].widths.push(RubyRTF.twips_to_points(val))
+        current_section[:modifiers][:row].end_positions.push(RubyRTF.twips_to_points(val))
 
       when :intbl then
         @section_stack.pop
