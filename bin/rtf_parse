@@ -86,7 +86,7 @@ doc.sections.each do |section|
   mods = section[:modifiers]
 
   if mods[:table]
-    pp mods[:table]
+  #  pp mods[:table]
 
     str << "<table>\n"
     mods[:table].rows.each do |row|
