@@ -184,11 +184,11 @@ module RubyRTF
 
       when :trgraph then
         raise "trgraph outside of a table?" if !current_section[:modifiers][:row]
-        current_section[:modifiers][:row].table.half_gap = val
+        current_section[:modifiers][:row].table.half_gap = RubyRTF.twips_to_points(val)
 
       when :cellx then
         raise "cellx outside of a table?" if !current_section[:modifiers][:row]
-        current_section[:modifiers][:row].cells.push(val)
+        current_section[:modifiers][:row].cells.push(RubyRTF.twips_to_points(val))
 
       when :intbl then ;
       when :cell then

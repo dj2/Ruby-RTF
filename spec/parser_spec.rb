@@ -631,7 +631,7 @@ describe RubyRTF::Parser do
         sect[1][:modifiers][:table].should_not be_nil
         table = sect[1][:modifiers][:table]
 
-        compare_table_results(table, [{:cells => [1440], :values => %w(fee.)}])
+        compare_table_results(table, [{:cells => [72], :values => %w(fee.)}])
       end
 
       it 'parses a single row with multiple columns' do
@@ -652,7 +652,7 @@ describe RubyRTF::Parser do
         sect[1][:modifiers][:table].should_not be_nil
         table = sect[1][:modifiers][:table]
 
-        compare_table_results(table, [{:cells => [1440, 2880, 1000], :values => %w(fee. fie. foe.)}])
+        compare_table_results(table, [{:cells => [72, 144, 50], :values => %w(fee. fie. foe.)}])
       end
 
       it 'parses multiple rows and multiple columns' do
@@ -676,8 +676,8 @@ describe RubyRTF::Parser do
         sect[1][:modifiers][:table].should_not be_nil
         table = sect[1][:modifiers][:table]
 
-        [{:cells => [1440, 2880, 1000], :values => %w(fee. fie. foe.)},
-         {:cells => [1000, 1440, 2880], :values => %w(foo. bar. baz.)}].each_with_index do |row, idx|
+        [{:cells => [72, 144, 50], :values => %w(fee. fie. foe.)},
+         {:cells => [50, 72, 144], :values => %w(foo. bar. baz.)}].each_with_index do |row, idx|
            cells = table.rows[idx].cells
            row[:cells].each_with_index do |size, cidx|
              cells[cidx].should == size
@@ -712,8 +712,8 @@ describe RubyRTF::Parser do
         sect[1][:modifiers][:table].should_not be_nil
         table = sect[1][:modifiers][:table]
 
-        [{:cells => [1440, 2880, 1000], :values => %w(fee. fie. foe.)},
-         {:cells => [1000, 1440, 2880], :values => %w(foo. bar. baz.)}].each_with_index do |row, idx|
+        [{:cells => [72, 144, 50], :values => %w(fee. fie. foe.)},
+         {:cells => [50, 72, 144], :values => %w(foo. bar. baz.)}].each_with_index do |row, idx|
            cells = table.rows[idx].cells
            row[:cells].each_with_index do |size, cidx|
              cells[cidx].should == size
