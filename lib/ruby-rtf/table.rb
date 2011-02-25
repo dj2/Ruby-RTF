@@ -3,11 +3,16 @@ module RubyRTF
     attr_accessor :rows, :half_gap
 
     def initialize
-      @rows = [RubyRTF::Table::Row.new(self)]
+      @rows = []
+      add_row
     end
 
     def current_row
       @rows.last
+    end
+
+    def add_row
+      @rows << RubyRTF::Table::Row.new(self)
     end
 
     class Row

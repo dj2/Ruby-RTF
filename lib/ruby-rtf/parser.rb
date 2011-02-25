@@ -162,9 +162,24 @@ module RubyRTF
       when *[:pard, :plain] then reset_current_section!
 
       when :trowd then
-        table = RubyRTF::Table.new
-        add_modifier_section(:table => table)
-        current_section[:modifiers][:row] = table.rows.first
+        table = current_section_list.last[:modifiers][:table] rescue nil
+        if table
+          table.add_row
+        else
+          table = RubyRTF::Table.new
+
+          if !current_section[:text].empty?
+            force_section!({:table => table})
+          else
+            current_section[:modifiers][:table] = table
+            pop_formatting!
+          end
+
+          force_section!
+          pop_formatting!
+        end
+
+        current_section[:modifiers][:row] = table.rows.last
         @section_stack.push(table.current_row.sections)
 
       when :trgraph then
@@ -176,7 +191,10 @@ module RubyRTF
         current_section[:modifiers][:row].cells.push(val)
 
       when :intbl then ;
-      when :cell then add_section!
+      when :cell then
+        pop_formatting!
+        force_section!
+
       when :row then @section_stack.pop
 
       else STDERR.puts "Unknown control #{name.inspect} with #{val} at #{current_pos}"
