@@ -727,6 +727,24 @@ describe RubyRTF::Parser do
 
         compare_table_results(table, [{:widths => [72], :values => [["fee.", "\n", "fie."]]}])
       end
+
+      it 'parses a new line inside a table cell' do
+        src = '{\rtf1 Before Table' +
+                '\trowd\trgraph180\cellx1440\cellx2880\cellx1000' +
+                '\pard\intbl fee.\cell' +
+                '\pard\intbl\cell' +
+                '\pard\intbl fie.\cell\row ' +
+                'After table}'
+        d = parser.parse(src)
+
+        sect = d.sections
+        sect.length.should == 3
+        sect[0][:text].should == 'Before Table'
+        sect[2][:text].should == 'After table'
+        table = sect[1][:modifiers][:table]
+
+        compare_table_results(table, [{:widths => [72, 144, 50], :values => [["fee."], [""], ["fie."]]}])
+      end
     end
   end
 end
