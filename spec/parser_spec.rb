@@ -625,7 +625,7 @@ describe RubyRTF::Parser do
 
       it 'parses a single row/column table' do
         src = '{\rtf1 Before Table' +
-                '\trowd\trgraph180\cellx1440' +
+                '\trowd\trgaph180\cellx1440' +
                 '\pard\intbl fee.\cell\row ' +
                 'After table}'
         d = parser.parse(src)
@@ -641,9 +641,9 @@ describe RubyRTF::Parser do
         compare_table_results(table, [{:widths => [72], :values => [['fee.']]}])
       end
 
-      it 'parses a \trgraph180' do
+      it 'parses a \trgaph180' do
         src = '{\rtf1 Before Table' +
-                '\trowd\trgraph180\cellx1440' +
+                '\trowd\trgaph180\cellx1440' +
                 '\pard\intbl fee.\cell\row ' +
                 'After table}'
         d = parser.parse(src)
@@ -654,7 +654,7 @@ describe RubyRTF::Parser do
 
       it 'parses a \trleft240' do
         src = '{\rtf1 Before Table' +
-                '\trowd\trgraph180\trleft240\cellx1440' +
+                '\trowd\trgaph180\trleft240\cellx1440' +
                 '\pard\intbl fee.\cell\row ' +
                 'After table}'
         d = parser.parse(src)
@@ -665,7 +665,7 @@ describe RubyRTF::Parser do
 
       it 'parses a single row with multiple columns' do
         src = '{\rtf1 Before Table' +
-                '\trowd\trgraph180\cellx1440\cellx2880\cellx1000' +
+                '\trowd\trgaph180\cellx1440\cellx2880\cellx1000' +
                 '\pard\intbl fee.\cell' +
                 '\pard\intbl fie.\cell' +
                 '\pard\intbl foe.\cell\row ' +
@@ -686,11 +686,11 @@ describe RubyRTF::Parser do
 
       it 'parses multiple rows and multiple columns' do
         src = '{\rtf1 \strike Before Table' +
-                '\trowd\trgraph180\cellx1440\cellx2880\cellx1000' +
+                '\trowd\trgaph180\cellx1440\cellx2880\cellx1000' +
                 '\pard\intbl\ul fee.\cell' +
                 '\pard\intbl\i fie.\cell' +
                 '\pard\intbl\b foe.\cell\row ' +
-                '\trowd\trgraph180\cellx1000\cellx1440\cellx2880' +
+                '\trowd\trgaph180\cellx1000\cellx1440\cellx2880' +
                 '\pard\intbl\i foo.\cell' +
                 '\pard\intbl\b bar.\cell' +
                 '\pard\intbl\ul baz.\cell\row ' +
@@ -711,11 +711,11 @@ describe RubyRTF::Parser do
 
       it 'parses a grouped table' do
         src = '{\rtf1 \strike Before Table' +
-                '{\trowd\trgraph180\cellx1440\cellx2880\cellx1000' +
+                '{\trowd\trgaph180\cellx1440\cellx2880\cellx1000' +
                   '\pard\intbl\ul fee.\cell' +
                   '\pard\intbl\i fie.\cell' +
                   '\pard\intbl\b foe.\cell\row}' +
-                '{\trowd\trgraph180\cellx1000\cellx1440\cellx2880' +
+                '{\trowd\trgaph180\cellx1000\cellx1440\cellx2880' +
                   '\pard\intbl\i foo.\cell' +
                   '\pard\intbl\b bar.\cell' +
                   '\pard\intbl\ul baz.\cell\row}' +
@@ -736,7 +736,7 @@ describe RubyRTF::Parser do
 
       it 'parses a new line inside a table cell' do
         src = '{\rtf1 Before Table' +
-                '\trowd\trgraph180\cellx1440' +
+                '\trowd\trgaph180\cellx1440' +
                 '\pard\intbl fee.\line fie.\cell\row ' +
                 'After table}'
         d = parser.parse(src)
@@ -752,7 +752,7 @@ describe RubyRTF::Parser do
 
       it 'parses a new line inside a table cell' do
         src = '{\rtf1 Before Table' +
-                '\trowd\trgraph180\cellx1440\cellx2880\cellx1000' +
+                '\trowd\trgaph180\cellx1440\cellx2880\cellx1000' +
                 '\pard\intbl fee.\cell' +
                 '\pard\intbl\cell' +
                 '\pard\intbl fie.\cell\row ' +
@@ -766,6 +766,21 @@ describe RubyRTF::Parser do
         table = sect[1][:modifiers][:table]
 
         compare_table_results(table, [{:widths => [72, 144, 50], :values => [["fee."], [""], ["fie."]]}])
+      end
+
+      it 'parses a grouped cell' do
+        src = '{\rtf1\trowd \pard {\fs20 Familiar }{\cell }{\fs20 Alignment }{\cell }\pard \intbl {\fs20 Arcane Spellcaster Level}{\cell }\pard {\b\fs18 \trowd \trgaph108\trleft-108\row }}'
+        d = parser.parse(src)
+
+        sect = d.sections
+pp sect
+
+        sect.length.should == 3
+        sect[0][:text].should == 'Before Table'
+        sect[2][:text].should == 'After table'
+        table = sect[1][:modifiers][:table]
+pp table
+        compare_table_results(table, [{:widths => [72, 144], :values => [["fee."], ["fie."]]}])
       end
     end
   end

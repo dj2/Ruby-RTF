@@ -182,8 +182,8 @@ module RubyRTF
         current_section[:modifiers][:row] = table.rows.last
         @section_stack.push(table.current_row.current_cell.sections)
 
-      when :trgraph then
-        raise "trgraph outside of a table?" if !current_section[:modifiers][:row]
+      when :trgaph then
+        raise "trgaph outside of a table?" if !current_section[:modifiers][:row]
         current_section[:modifiers][:row].table.half_gap = RubyRTF.twips_to_points(val)
 
       when :trleft then
@@ -411,6 +411,16 @@ module RubyRTF
     def add_section!(mods = {})
       if current_section[:text].empty?
         current_section[:modifiers].merge!(mods)
+
+      elsif current_section[:modifiers][:row]
+        row = current_section[:modifiers][:row]
+        force_section!
+
+        @section_stack.pop
+        cell = row.add_cell
+        current_section[:modifiers][:row] = row
+        @section_stack.push(cell.sections)
+
       else
         force_section!(mods)
       end
@@ -434,7 +444,12 @@ module RubyRTF
     #
     # @return [Nil]
     def reset_current_section!
+      table = current_section[:modifiers][:table]
+      row = current_section[:modifiers][:row]
+
       current_section[:modifiers].clear
+      current_section[:modifiers][:table] = table if table
+      current_section[:modifiers][:row] = row if row
     end
 
     def current_section_list
