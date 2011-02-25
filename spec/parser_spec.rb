@@ -641,6 +641,28 @@ describe RubyRTF::Parser do
         compare_table_results(table, [{:widths => [72], :values => [['fee.']]}])
       end
 
+      it 'parses a \trgraph180' do
+        src = '{\rtf1 Before Table' +
+                '\trowd\trgraph180\cellx1440' +
+                '\pard\intbl fee.\cell\row ' +
+                'After table}'
+        d = parser.parse(src)
+
+        table = d.sections[1][:modifiers][:table]
+        table.half_gap.should == 9
+      end
+
+      it 'parses a \trleft240' do
+        src = '{\rtf1 Before Table' +
+                '\trowd\trgraph180\trleft240\cellx1440' +
+                '\pard\intbl fee.\cell\row ' +
+                'After table}'
+        d = parser.parse(src)
+
+        table = d.sections[1][:modifiers][:table]
+        table.left_margin.should == 12
+      end
+
       it 'parses a single row with multiple columns' do
         src = '{\rtf1 Before Table' +
                 '\trowd\trgraph180\cellx1440\cellx2880\cellx1000' +

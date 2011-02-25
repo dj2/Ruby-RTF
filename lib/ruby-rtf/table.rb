@@ -1,8 +1,11 @@
 module RubyRTF
   class Table
-    attr_accessor :rows, :half_gap
+    attr_accessor :rows, :half_gap, :left_margin
 
     def initialize
+      @left_margin = 0
+      @half_gap = 0
+
       @rows = []
       add_row
     end
