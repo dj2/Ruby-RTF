@@ -13,16 +13,37 @@ module RubyRTF
 
     def add_row
       @rows << RubyRTF::Table::Row.new(self)
+      @rows.last
     end
 
     class Row
-      attr_accessor :sections, :table, :cells
+      attr_accessor :table, :widths, :cells
 
       def initialize(table)
         @table = table
+        @widths = []
         @cells = []
+        add_cell
+      end
 
-        @sections = []
+      def current_cell
+        @cells.last
+      end
+
+      def add_cell
+        return @cells.last if (@cells.length > 0) && @cells.last.sections.empty?
+
+        @cells << RubyRTF::Table::Row::Cell.new(self)
+        @cells.last
+      end
+
+      class Cell
+        attr_accessor :sections, :row
+
+        def initialize(row)
+          @row = row
+          @sections = []
+        end
       end
     end
   end

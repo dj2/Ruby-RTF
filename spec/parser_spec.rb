@@ -606,21 +606,28 @@ describe RubyRTF::Parser do
         table.rows.length.should == data.length
 
         data.each_with_index do |row, idx|
-           cells = table.rows[idx].cells
-           row[:cells].each_with_index do |size, cidx|
-             cells[cidx].should == size
-            end
+          widths = table.rows[idx].widths
+          row[:widths].each_with_index do |size, cidx|
+            widths[cidx].should == size
+          end
 
-            sects = table.rows[idx].sections
-            sects.length.should == row[:values].length
-            row[:values].each_with_index do |val, vidx|
-              sects[vidx][:text].should == val
+          cells = table.rows[idx].cells
+          cells.length.should == row[:values].length
+
+          row[:values].each_with_index do |items, vidx|
+            sects = cells[vidx].sections
+            items.each_with_index do |val, iidx|
+              sects[iidx][:text].should == val
             end
-         end
+          end
+        end
       end
 
       it 'parses a single row/column table' do
-        src = '{\rtf1 Before Table\trowd\trgraph180\cellx1440\pard\intbl fee.\cell\row After table}'
+        src = '{\rtf1 Before Table' +
+                '\trowd\trgraph180\cellx1440' +
+                '\pard\intbl fee.\cell\row ' +
+                'After table}'
         d = parser.parse(src)
 
         sect = d.sections
@@ -631,7 +638,7 @@ describe RubyRTF::Parser do
         sect[1][:modifiers][:table].should_not be_nil
         table = sect[1][:modifiers][:table]
 
-        compare_table_results(table, [{:cells => [72], :values => %w(fee.)}])
+        compare_table_results(table, [{:widths => [72], :values => [['fee.']]}])
       end
 
       it 'parses a single row with multiple columns' do
@@ -652,7 +659,7 @@ describe RubyRTF::Parser do
         sect[1][:modifiers][:table].should_not be_nil
         table = sect[1][:modifiers][:table]
 
-        compare_table_results(table, [{:cells => [72, 144, 50], :values => %w(fee. fie. foe.)}])
+        compare_table_results(table, [{:widths => [72, 144, 50], :values => [['fee.'], ['fie.'], ['foe.']]}])
       end
 
       it 'parses multiple rows and multiple columns' do
@@ -676,19 +683,8 @@ describe RubyRTF::Parser do
         sect[1][:modifiers][:table].should_not be_nil
         table = sect[1][:modifiers][:table]
 
-        [{:cells => [72, 144, 50], :values => %w(fee. fie. foe.)},
-         {:cells => [50, 72, 144], :values => %w(foo. bar. baz.)}].each_with_index do |row, idx|
-           cells = table.rows[idx].cells
-           row[:cells].each_with_index do |size, cidx|
-             cells[cidx].should == size
-            end
-
-            sects = table.rows[idx].sections
-            sects.length.should == row[:values].length
-            row[:values].each_with_index do |val, vidx|
-              sects[vidx][:text].should == val
-            end
-         end
+        compare_table_results(table, [{:widths => [72, 144, 50], :values => [['fee.'], ['fie.'], ['foe.']]},
+                                      {:widths => [50, 72, 144], :values => [['foo.'], ['bar.'], ['baz.']]}])
       end
 
       it 'parses a grouped table' do
@@ -712,20 +708,25 @@ describe RubyRTF::Parser do
         sect[1][:modifiers][:table].should_not be_nil
         table = sect[1][:modifiers][:table]
 
-        [{:cells => [72, 144, 50], :values => %w(fee. fie. foe.)},
-         {:cells => [50, 72, 144], :values => %w(foo. bar. baz.)}].each_with_index do |row, idx|
-           cells = table.rows[idx].cells
-           row[:cells].each_with_index do |size, cidx|
-             cells[cidx].should == size
-            end
+        compare_table_results(table, [{:widths => [72, 144, 50], :values => [['fee.'], ['fie.'], ['foe.']]},
+                                      {:widths => [50, 72, 144], :values => [['foo.'], ['bar.'], ['baz.']]}])
+      end
 
-            sects = table.rows[idx].sections
-            sects.length.should == row[:values].length
-            row[:values].each_with_index do |val, vidx|
-              sects[vidx][:text].should == val
-            end
-         end
-        end
+      it 'parses a new line inside a table cell' do
+        src = '{\rtf1 Before Table' +
+                '\trowd\trgraph180\cellx1440' +
+                '\pard\intbl fee.\line fie.\cell\row ' +
+                'After table}'
+        d = parser.parse(src)
+
+        sect = d.sections
+        sect.length.should == 3
+        sect[0][:text].should == 'Before Table'
+        sect[2][:text].should == 'After table'
+        table = sect[1][:modifiers][:table]
+
+        compare_table_results(table, [{:widths => [72], :values => [["fee.", "\n", "fie."]]}])
+      end
     end
   end
 end

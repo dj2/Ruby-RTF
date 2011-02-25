@@ -180,7 +180,7 @@ module RubyRTF
         end
 
         current_section[:modifiers][:row] = table.rows.last
-        @section_stack.push(table.current_row.sections)
+        @section_stack.push(table.current_row.current_cell.sections)
 
       when :trgraph then
         raise "trgraph outside of a table?" if !current_section[:modifiers][:row]
@@ -188,9 +188,14 @@ module RubyRTF
 
       when :cellx then
         raise "cellx outside of a table?" if !current_section[:modifiers][:row]
-        current_section[:modifiers][:row].cells.push(RubyRTF.twips_to_points(val))
+        current_section[:modifiers][:row].widths.push(RubyRTF.twips_to_points(val))
 
-      when :intbl then ;
+      when :intbl then
+        @section_stack.pop
+        table = current_section_list.last[:modifiers][:table]
+        table.current_row.add_cell
+        @section_stack.push(table.current_row.current_cell.sections)
+
       when :cell then
         pop_formatting!
         force_section!
