@@ -17,85 +17,16 @@ module RubyRTF
     # @return [Array] The different formatted sections of the document
     attr_reader :sections
 
-    # @return [Array] The current formatting block to use as the basis for new sections
-    attr_reader :formatting_stack
-
-    # Keys that aren't inherited
-    BLACKLISTED = [:paragraph, :newline, :tab, :lquote, :rquote, :ldblquote, :rdblquote]
-
     # Creates a new document
     #
     # @return [RubyRTF::Document] The new document
-    def initialize
+    def initialize(sections)
       @font_table = []
       @colour_table = []
       @character_set = :ansi
       @default_font = 0
 
-      default_mods = {}
-      @formatting_stack = [default_mods]
-      @sections = [{:text => '', :modifiers => default_mods}]
-    end
-
-    # Add a new section to the document
-    # @note If there is no text added to the current section this does nothing
-    #
-    # @return [Nil]
-    def add_section!
-      return if current_section[:text].empty?
-      force_section!
-    end
-
-    # Adds a new section to the document regardless if the current section is empty
-    #
-    # @return [Nil]
-    def force_section!
-      mods = {}
-      if current_section
-        formatting_stack.last.each_pair do |k, v|
-          next if BLACKLISTED.include?(k)
-          mods[k] = v
-        end
-      end
-      formatting_stack.push(mods)
-
-      @sections << {:text => '', :modifiers => mods}
-    end
-
-    # Resets the current section to default formating
-    #
-    # @return [Nil]
-    def reset_current_section!
-      current_section[:modifiers].clear
-    end
-
-    # Reset the current section to default settings
-    #
-    # @return [Nil]
-    def reset_section!
-      current_section[:modifiers] = {}
-    end
-
-    # Pop the current top element off the formatting stack.
-    # @note This will not allow you to remove the defualt formatting parameters
-    #
-    # @return [Nil]
-    def pop_formatting!
-      formatting_stack.pop if @formatting_stack.length > 1
-    end
-
-    # Removes the last section
-    #
-    # @return [Nil]
-    def remove_current_section!
-      sections.pop
-    end
-
-    # Retrieve the current section for the document
-    #
-    # @return [Hash] The document section data
-    def current_section
-      sections.last
+      @sections = sections
     end
 
     # Convert RubyRTF::Document to a string
