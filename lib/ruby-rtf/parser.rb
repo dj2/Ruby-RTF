@@ -1,6 +1,8 @@
 module RubyRTF
   # Handles the parsing of RTF content into an RubyRTF::Document
   class Parser
+    attr_accessor :current_section
+
     # @return [Array] The current formatting block to use as the basis for new sections
     attr_reader :formatting_stack
 
@@ -9,7 +11,8 @@ module RubyRTF
     def initialize
       default_mods = {}
       @formatting_stack = [default_mods]
-      @section_stack = [[{:text => '', :modifiers => default_mods}]]
+      @current_section = {:text => '', :modifiers => default_mods}
+      @section_stack = [[]]
 
       @doc = RubyRTF::Document.new(@section_stack.first)
     end
@@ -49,9 +52,11 @@ module RubyRTF
         end
       end
 
-      raise RubyRTF::InvalidDocument.new("Unbalanced {}s") unless group_level == 0
+      unless current_section[:text].empty?
+        current_section_list << current_section
+      end
 
-      remove_current_section! if current_section[:text].empty?
+      raise RubyRTF::InvalidDocument.new("Unbalanced {}s") unless group_level == 0
       @doc
     end
 
@@ -159,6 +164,7 @@ module RubyRTF
       when :trowd then
         table = RubyRTF::Table.new
         add_modifier_section(:table => table)
+        current_section[:modifiers][:row] = table.rows.first
         @section_stack.push(table.current_row.sections)
 
       when :trgraph then
@@ -170,7 +176,7 @@ module RubyRTF
         current_section[:modifiers][:row].cells.push(val)
 
       when :intbl then ;
-      when :cell then ;
+      when :cell then add_section!
       when :row then @section_stack.pop
 
       else STDERR.puts "Unknown control #{name.inspect} with #{val} at #{current_pos}"
@@ -367,23 +373,8 @@ module RubyRTF
       current_pos
     end
 
-    # Keys that aren't inherited
-    BLACKLISTED = [:paragraph, :newline, :tab, :lquote, :rquote, :ldblquote, :rdblquote]
-
-    def calc_current_modifiers(mods = {})
-      if current_section
-        formatting_stack.last.each_pair do |k, v|
-          next if BLACKLISTED.include?(k)
-          mods[k] = v
-        end
-      end
-      formatting_stack.push(mods)
-      mods
-    end
-
     def add_modifier_section(mods = {}, text = nil)
-      force_section!(mods)
-      current_section[:text] << text if text
+      force_section!(mods, text)
       pop_formatting!
 
       force_section!
@@ -398,8 +389,18 @@ module RubyRTF
       end
     end
 
-    def force_section!(mods = {})
-      current_section_list << {:text => '', :modifiers => calc_current_modifiers.merge(mods)}
+    # Keys that aren't inherited
+    BLACKLISTED = [:paragraph, :newline, :tab, :lquote, :rquote, :ldblquote, :rdblquote]
+    def force_section!(mods = {}, text =  nil)
+      current_section_list << @current_section
+
+      formatting_stack.last.each_pair do |k, v|
+        next if BLACKLISTED.include?(k)
+        mods[k] = v
+      end
+      formatting_stack.push(mods)
+
+      @current_section = {:text => (text || ''), :modifiers => mods}
     end
 
     # Resets the current section to default formating
@@ -407,20 +408,6 @@ module RubyRTF
     # @return [Nil]
     def reset_current_section!
       current_section[:modifiers].clear
-    end
-
-    # Removes the last section
-    #
-    # @return [Nil]
-    def remove_current_section!
-      current_section_list.pop
-    end
-
-    # Retrieve the current section for the document
-    #
-    # @return [Hash] The document section data
-    def current_section
-      current_section_list.last
     end
 
     def current_section_list

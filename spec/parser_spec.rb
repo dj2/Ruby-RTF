@@ -398,9 +398,8 @@ describe RubyRTF::Parser do
       it "sets a #{quote}" do
         parser.current_section[:text] = 'My code'
         parser.handle_control(quote.to_sym, nil, nil, 0)
-        parser.remove_current_section!
-        parser.current_section[:text].should == "'"
-        parser.current_section[:modifiers][quote.to_sym].should be_true
+        parser.current_section_list.last[:text].should == "'"
+        parser.current_section_list.last[:modifiers][quote.to_sym].should be_true
       end
     end
 
@@ -408,9 +407,8 @@ describe RubyRTF::Parser do
       it "sets a #{quote}" do
         parser.current_section[:text] = 'My code'
         parser.handle_control(quote.to_sym, nil, nil, 0)
-        parser.remove_current_section!
-        parser.current_section[:text].should == '"'
-        parser.current_section[:modifiers][quote.to_sym].should be_true
+        parser.current_section_list.last[:text].should == '"'
+        parser.current_section_list.last[:modifiers][quote.to_sym].should be_true
       end
     end
 
@@ -425,9 +423,8 @@ describe RubyRTF::Parser do
         it "sets from #{type}" do
           parser.current_section[:text] = "end."
           parser.handle_control(type.to_sym, nil, nil, 0)
-          parser.remove_current_section!
-          parser.current_section[:modifiers][:newline].should be_true
-          parser.current_section[:text].should == "\n"
+          parser.current_section_list.last[:modifiers][:newline].should be_true
+          parser.current_section_list.last[:text].should == "\n"
         end
       end
 
@@ -441,9 +438,8 @@ describe RubyRTF::Parser do
     it 'inserts a \tab' do
       parser.current_section[:text] = "end."
       parser.handle_control(:tab, nil, nil, 0)
-      parser.remove_current_section!
-      parser.current_section[:modifiers][:tab].should be_true
-      parser.current_section[:text].should == "\t"
+      parser.current_section_list.last[:modifiers][:tab].should be_true
+      parser.current_section_list.last[:text].should == "\t"
     end
 
     it 'inserts a \super' do
@@ -481,17 +477,15 @@ describe RubyRTF::Parser do
     it 'inserts an \emdash' do
       parser.current_section[:text] = "end."
       parser.handle_control(:emdash, nil, nil, 0)
-      parser.remove_current_section!
-      parser.current_section[:modifiers][:emdash].should be_true
-      parser.current_section[:text].should == "--"
+      parser.current_section_list.last[:modifiers][:emdash].should be_true
+      parser.current_section_list.last[:text].should == "--"
     end
 
     it 'inserts an \endash' do
       parser.current_section[:text] = "end."
       parser.handle_control(:endash, nil, nil, 0)
-      parser.remove_current_section!
-      parser.current_section[:modifiers][:endash].should be_true
-      parser.current_section[:text].should == "-"
+      parser.current_section_list.last[:modifiers][:endash].should be_true
+      parser.current_section_list.last[:text].should == "-"
     end
 
     context 'escapes' do
@@ -550,14 +544,14 @@ describe RubyRTF::Parser do
       it 'does not add a section if the current :text is empty' do
         d = parser
         d.add_section!
-        d.current_section_list.length.should == 1
+        d.current_section_list.length.should == 0
       end
 
       it 'adds a section of the current section has text' do
         d = parser
         d.current_section[:text] = "Test"
         d.add_section!
-        d.current_section_list.length.should == 2
+        d.current_section_list.length.should == 1
       end
 
       it 'inherits the modifiers from the parent section' do
@@ -572,7 +566,7 @@ describe RubyRTF::Parser do
 
         sections = d.current_section_list
         sections.first[:modifiers].should == {:bold => true, :italics => true}
-        sections.last[:modifiers].should == {:bold => true, :italics => true, :underline => true}
+        d.current_section[:modifiers].should == {:bold => true, :italics => true, :underline => true}
       end
     end
 
@@ -588,7 +582,7 @@ describe RubyRTF::Parser do
 
         sections = d.current_section_list
         sections.first[:modifiers].should == {:bold => true, :italics => true}
-        sections.last[:modifiers].should == {:underline => true}
+        d.current_section[:modifiers].should == {:underline => true}
       end
     end
 
@@ -602,7 +596,6 @@ describe RubyRTF::Parser do
 
         d.current_section[:modifiers][:underline] = true
 
-        d.remove_current_section!
         d.current_section_list.length.should == 1
         d.current_section_list.first[:text].should == 'New text'
       end

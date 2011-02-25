@@ -17,7 +17,7 @@ module RubyRTF
         @table = table
         @cells = []
 
-        @sections = [{:text => '', :modifiers => {:row => self}}]
+        @sections = []
       end
     end
   end
