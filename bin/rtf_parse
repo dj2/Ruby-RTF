@@ -88,9 +88,11 @@ doc.sections.each do |section|
     str << "<table>\n"
     mods[:table].rows.each do |row|
       str << "<tr>\n"
-      row.each do |cell|
+      row.cells.each do |cell|
         str << "<td>\n"
-        format(str, cell)
+        cell.sections.each do |sect|
+          format(str, sect)
+        end
         str << "</td>\n"
       end
       str << "</tr>\n"
