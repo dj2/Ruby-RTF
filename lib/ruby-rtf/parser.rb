@@ -411,16 +411,6 @@ module RubyRTF
     def add_section!(mods = {})
       if current_section[:text].empty?
         current_section[:modifiers].merge!(mods)
-
-      elsif current_section[:modifiers][:row]
-        row = current_section[:modifiers][:row]
-        force_section!
-
-        @section_stack.pop
-        cell = row.add_cell
-        current_section[:modifiers][:row] = row
-        @section_stack.push(cell.sections)
-
       else
         force_section!(mods)
       end

@@ -86,13 +86,11 @@ doc.sections.each do |section|
   mods = section[:modifiers]
 
   if mods[:table]
-  #  pp mods[:table]
-
     str << "<table>\n"
     mods[:table].rows.each do |row|
       str << "<tr>\n"
       row.cells.each do |cell|
-        str << "<td>\n"
+        str << "<td width=\"#{cell.width}\">\n"
         cell.sections.each do |sect|
           format(str, sect)
         end
