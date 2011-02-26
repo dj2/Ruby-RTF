@@ -49,6 +49,14 @@ module RubyRTF
           @sections = []
         end
 
+        def <<(obj)
+          @sections << obj
+        end
+
+        def table
+          row.table
+        end
+
         def width
           gap = row.table.half_gap
           left_margin = row.table.left_margin

@@ -12,9 +12,9 @@ module RubyRTF
       default_mods = {}
       @formatting_stack = [default_mods]
       @current_section = {:text => '', :modifiers => default_mods}
-      @section_stack = [[]]
 
-      @doc = RubyRTF::Document.new(@section_stack.first)
+      @doc = RubyRTF::Document.new
+      @context_stack = [@doc]
     end
 
     # Parses a given string into an RubyRTF::Document
@@ -53,7 +53,7 @@ module RubyRTF
       end
 
       unless current_section[:text].empty?
-        current_section_list << current_section
+        current_context << current_section
       end
 
       raise RubyRTF::InvalidDocument.new("Unbalanced {}s") unless group_level == 0
@@ -162,7 +162,8 @@ module RubyRTF
       when *[:pard, :plain] then reset_current_section!
 
       when :trowd then
-        table = current_section_list.last[:modifiers][:table] rescue nil
+        table = nil
+        table = doc.sections.last[:modifiers][:table] if doc.sections.last && doc.sections.last[:modifiers][:table]
         if table
           table.add_row
         else
@@ -179,32 +180,46 @@ module RubyRTF
           pop_formatting!
         end
 
-        current_section[:modifiers][:row] = table.rows.last
-        @section_stack.push(table.current_row.current_cell.sections)
+        @context_stack.push(table.current_row.current_cell)
 
       when :trgaph then
-        raise "trgaph outside of a table?" if !current_section[:modifiers][:row]
-        current_section[:modifiers][:row].table.half_gap = RubyRTF.twips_to_points(val)
+        raise "trgaph outside of a table?" if !current_context.respond_to?(:table)
+        current_context.table.half_gap = RubyRTF.twips_to_points(val)
 
       when :trleft then
-        raise "trleft outside of a table?" if !current_section[:modifiers][:row]
-        current_section[:modifiers][:row].table.left_margin = RubyRTF.twips_to_points(val)
+        raise "trleft outside of a table?" if !current_context.respond_to?(:table)
+        current_context.table.left_margin = RubyRTF.twips_to_points(val)
 
       when :cellx then
-        raise "cellx outside of a table?" if !current_section[:modifiers][:row]
-        current_section[:modifiers][:row].end_positions.push(RubyRTF.twips_to_points(val))
+        raise "cellx outside of a table?" if !current_context.respond_to?(:row)
+        current_context.row.end_positions.push(RubyRTF.twips_to_points(val))
 
-      when :intbl then
-        @section_stack.pop
-        table = current_section_list.last[:modifiers][:table]
-        table.current_row.add_cell
-        @section_stack.push(table.current_row.current_cell.sections)
+      when :intbl then ;
 
       when :cell then
         pop_formatting!
-        force_section!
 
-      when :row then @section_stack.pop
+        table = current_context.table if current_context.respond_to?(:table)
+
+        force_section! #unless current_section[:text].empty?
+        reset_current_section!
+
+        @context_stack.pop
+
+        # only add a cell if the row isn't full already
+        if table && table.current_row && (table.current_row.cells.length < table.current_row.end_positions.length)
+          cell = table.current_row.add_cell
+          @context_stack.push(cell)
+        end
+
+      when :row then
+        if current_context.sections.empty?
+          # empty row
+          table = current_context.table
+          table.rows.pop
+
+          @context_stack.pop
+        end
 
       else STDERR.puts "Unknown control #{name.inspect} with #{val} at #{current_pos}"
       end
@@ -419,7 +434,7 @@ module RubyRTF
     # Keys that aren't inherited
     BLACKLISTED = [:paragraph, :newline, :tab, :lquote, :rquote, :ldblquote, :rdblquote]
     def force_section!(mods = {}, text =  nil)
-      current_section_list << @current_section
+      current_context << @current_section
 
       formatting_stack.last.each_pair do |k, v|
         next if BLACKLISTED.include?(k)
@@ -434,16 +449,11 @@ module RubyRTF
     #
     # @return [Nil]
     def reset_current_section!
-      table = current_section[:modifiers][:table]
-      row = current_section[:modifiers][:row]
-
       current_section[:modifiers].clear
-      current_section[:modifiers][:table] = table if table
-      current_section[:modifiers][:row] = row if row
     end
 
-    def current_section_list
-      @section_stack.last
+    def current_context
+      @context_stack.last
     end
 
     # Pop the current top element off the formatting stack.

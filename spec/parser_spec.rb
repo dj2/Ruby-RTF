@@ -398,8 +398,8 @@ describe RubyRTF::Parser do
       it "sets a #{quote}" do
         parser.current_section[:text] = 'My code'
         parser.handle_control(quote.to_sym, nil, nil, 0)
-        parser.current_section_list.last[:text].should == "'"
-        parser.current_section_list.last[:modifiers][quote.to_sym].should be_true
+        doc.sections.last[:text].should == "'"
+        doc.sections.last[:modifiers][quote.to_sym].should be_true
       end
     end
 
@@ -407,8 +407,8 @@ describe RubyRTF::Parser do
       it "sets a #{quote}" do
         parser.current_section[:text] = 'My code'
         parser.handle_control(quote.to_sym, nil, nil, 0)
-        parser.current_section_list.last[:text].should == '"'
-        parser.current_section_list.last[:modifiers][quote.to_sym].should be_true
+        doc.sections.last[:text].should == '"'
+        doc.sections.last[:modifiers][quote.to_sym].should be_true
       end
     end
 
@@ -423,8 +423,8 @@ describe RubyRTF::Parser do
         it "sets from #{type}" do
           parser.current_section[:text] = "end."
           parser.handle_control(type.to_sym, nil, nil, 0)
-          parser.current_section_list.last[:modifiers][:newline].should be_true
-          parser.current_section_list.last[:text].should == "\n"
+          doc.sections.last[:modifiers][:newline].should be_true
+          doc.sections.last[:text].should == "\n"
         end
       end
 
@@ -438,8 +438,8 @@ describe RubyRTF::Parser do
     it 'inserts a \tab' do
       parser.current_section[:text] = "end."
       parser.handle_control(:tab, nil, nil, 0)
-      parser.current_section_list.last[:modifiers][:tab].should be_true
-      parser.current_section_list.last[:text].should == "\t"
+      doc.sections.last[:modifiers][:tab].should be_true
+      doc.sections.last[:text].should == "\t"
     end
 
     it 'inserts a \super' do
@@ -477,15 +477,15 @@ describe RubyRTF::Parser do
     it 'inserts an \emdash' do
       parser.current_section[:text] = "end."
       parser.handle_control(:emdash, nil, nil, 0)
-      parser.current_section_list.last[:modifiers][:emdash].should be_true
-      parser.current_section_list.last[:text].should == "--"
+      doc.sections.last[:modifiers][:emdash].should be_true
+      doc.sections.last[:text].should == "--"
     end
 
     it 'inserts an \endash' do
       parser.current_section[:text] = "end."
       parser.handle_control(:endash, nil, nil, 0)
-      parser.current_section_list.last[:modifiers][:endash].should be_true
-      parser.current_section_list.last[:text].should == "-"
+      doc.sections.last[:modifiers][:endash].should be_true
+      doc.sections.last[:text].should == "-"
     end
 
     context 'escapes' do
@@ -533,7 +533,7 @@ describe RubyRTF::Parser do
 
   context 'sections' do
     it 'has sections' do
-      parser.current_section_list.should_not be_nil
+      doc.sections.should_not be_nil
     end
 
     it 'sets an initial section' do
@@ -544,14 +544,14 @@ describe RubyRTF::Parser do
       it 'does not add a section if the current :text is empty' do
         d = parser
         d.add_section!
-        d.current_section_list.length.should == 0
+        doc.sections.length.should == 0
       end
 
       it 'adds a section of the current section has text' do
         d = parser
         d.current_section[:text] = "Test"
         d.add_section!
-        d.current_section_list.length.should == 1
+        doc.sections.length.should == 1
       end
 
       it 'inherits the modifiers from the parent section' do
@@ -564,7 +564,7 @@ describe RubyRTF::Parser do
 
         d.current_section[:modifiers][:underline] = true
 
-        sections = d.current_section_list
+        sections = doc.sections
         sections.first[:modifiers].should == {:bold => true, :italics => true}
         d.current_section[:modifiers].should == {:bold => true, :italics => true, :underline => true}
       end
@@ -580,7 +580,7 @@ describe RubyRTF::Parser do
         d.reset_current_section!
         d.current_section[:modifiers][:underline] = true
 
-        sections = d.current_section_list
+        sections = doc.sections
         sections.first[:modifiers].should == {:bold => true, :italics => true}
         d.current_section[:modifiers].should == {:underline => true}
       end
@@ -596,8 +596,8 @@ describe RubyRTF::Parser do
 
         d.current_section[:modifiers][:underline] = true
 
-        d.current_section_list.length.should == 1
-        d.current_section_list.first[:text].should == 'New text'
+        doc.sections.length.should == 1
+        doc.sections.first[:text].should == 'New text'
       end
     end
 
@@ -769,13 +769,11 @@ describe RubyRTF::Parser do
       end
 
       it 'parses a grouped cell' do
-        pending
-
-        src = '{\rtf1\trowd \pard ' +
+        src = '{\rtf1 Before Table\trowd\cellx1440\cellx2880\cellx1000 \pard ' +
                 '{\fs20 Familiar }{\cell }' +
                 '{\fs20 Alignment }{\cell }' +
                 '\pard \intbl {\fs20 Arcane Spellcaster Level}{\cell }' +
-                '\pard {\b\fs18 \trowd \trgaph108\trleft-108\row }}'
+                '\pard {\b\fs18 \trowd \trgaph108\trleft-108\cellx1000\row }After table}'
         d = parser.parse(src)
 
         sect = d.sections
@@ -785,7 +783,35 @@ describe RubyRTF::Parser do
         sect[2][:text].should == 'After table'
         table = sect[1][:modifiers][:table]
 
-        compare_table_results(table, [{:end_positions => [72, 144], :values => [["fee."], ["fie."]]}])
+        compare_table_results(table, [{:end_positions => [72, 144, 50],
+                                       :values => [["Familiar "], ["Alignment "], ['Arcane Spellcaster Level']]}])
+      end
+
+      it 'parses cells' do
+        src = '{\rtf1\trowd\trgaph108\trleft-108\cellx1440\cellx2880' +
+                '\intbl{\fs20 Familiar }{\cell }' +
+                '{\fs20 Alignment }{\cell }}'
+
+        d = parser.parse(src)
+        table = d.sections[0][:modifiers][:table]
+
+        compare_table_results(table, [{:end_positions => [72, 144], :values => [['Familiar '], ['Alignment ']]}])
+      end
+
+      it 'parses blank rows' do
+        src = '{\rtf1\trowd \trgaph108\trleft-108\cellx1440' +
+                '\intbl{\fs20 Familiar }{\cell }' +
+                '\pard\plain \intbl {\trowd \trgaph108\trleft-108\cellx1440\row } ' +
+                'Improved animal}'
+        d = parser.parse(src)
+
+        sect = d.sections
+        sect.length.should == 2
+        sect[1][:text].should == ' Improved animal'
+        sect[1][:modifiers].should == {}
+
+        table = sect[0][:modifiers][:table]
+        compare_table_results(table, [{:end_positions => [72], :values => [['Familiar ']]}])
       end
     end
   end
