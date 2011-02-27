@@ -528,8 +528,29 @@ describe RubyRTF::Parser do
         parser.current_section[:modifiers][:background_colour].to_s.should == "[255, 0, 255]"
       end
     end
-  end
 
+    context 'justification' do
+      it 'handles left justify' do
+        parser.handle_control(:ql, nil, nil, 0)
+        parser.current_section[:modifiers][:justification].should == :left
+      end
+
+      it 'handles right justify' do
+        parser.handle_control(:qr, nil, nil, 0)
+        parser.current_section[:modifiers][:justification].should == :right
+      end
+
+      it 'handles full justify' do
+        parser.handle_control(:qj, nil, nil, 0)
+        parser.current_section[:modifiers][:justification].should == :full
+      end
+
+      it 'handles centered' do
+        parser.handle_control(:qc, nil, nil, 0)
+        parser.current_section[:modifiers][:justification].should == :center
+      end
+    end
+  end
 
   context 'sections' do
     it 'has sections' do

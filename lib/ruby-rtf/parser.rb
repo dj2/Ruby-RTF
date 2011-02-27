@@ -133,6 +133,10 @@ module RubyRTF
       when :sub then add_section!(:subscript => true)
       when :strike then add_section!(:strikethrough => true)
       when :scaps then add_section!(:smallcaps => true)
+      when :ql then add_section!(:justification => :left)
+      when :qr then add_section!(:justification => :right)
+      when :qj then add_section!(:justification => :full)
+      when :qc then add_section!(:justification => :center)
       when :cf then add_section!(:foreground_colour => @doc.colour_table[val])
       when :cb then add_section!(:background_colour => @doc.colour_table[val])
       when :hex then current_section[:text] << val
