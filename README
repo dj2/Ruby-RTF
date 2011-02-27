@@ -1,0 +1,12 @@
+RubyRTF
+=======
+
+The Ruby RTF library is an attempt to parse RTF files. There is a lot still missing
+but the basics are there including the beginnings of table support.
+
+You can see an example of using the library in the bin/rtf_parse script which attempts
+to convert an RTF file to an HTML file.
+
+Issues
+======
+Please report any issues to the GitHub Issue tracker (https://github.com/dj2/ruby-rtf).
