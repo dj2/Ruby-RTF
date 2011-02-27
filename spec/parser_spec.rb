@@ -595,6 +595,28 @@ describe RubyRTF::Parser do
       end
     end
 
+    context 'margins' do
+      it 'handles left margin' do
+        parser.handle_control(:margl, 1000, nil, 0)
+        parser.current_section[:modifiers][:left_margin].should == 50
+      end
+
+      it 'handles right margin' do
+        parser.handle_control(:margr, 1000, nil, 0)
+        parser.current_section[:modifiers][:right_margin].should == 50
+      end
+
+      it 'handles top margin' do
+        parser.handle_control(:margt, 1000, nil, 0)
+        parser.current_section[:modifiers][:top_margin].should == 50
+      end
+
+      it 'handles bottom margin' do
+        parser.handle_control(:margb, 1000, nil, 0)
+        parser.current_section[:modifiers][:bottom_margin].should == 50
+      end
+    end
+
     context 'paragraph spacing' do
       it 'handles space before' do
         parser.handle_control(:sb, 1000, nil, 0)
