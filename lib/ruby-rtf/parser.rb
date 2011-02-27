@@ -1,3 +1,5 @@
+# encoding: utf-8
+
 module RubyRTF
   # Handles the parsing of RTF content into an RubyRTF::Document
   class Parser
@@ -148,12 +150,14 @@ module RubyRTF
       when :cb then add_section!(:background_colour => @doc.colour_table[val])
       when :hex then current_section[:text] << val
       when :u then
-        char = if val > 0
-          '\u' + val
+        char = if val > 0 && val < 10_000
+          '\u' + val.to_s
+        elsif val > 0
+          '\u' + ("%04x" % val)
         else
-          '\u' + (val + 65_536).to_s
+          '\u' + ("%04x" % (val + 65_536))
         end
-        current_section[:text] << char
+        current_section[:text] << eval("\"#{char}\"")
 
       when *[:rquote, :lquote] then add_modifier_section({name => true}, "'")
       when *[:rdblquote, :ldblquote] then add_modifier_section({name => true}, '"')

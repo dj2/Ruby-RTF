@@ -1,3 +1,5 @@
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe RubyRTF::Parser do
@@ -416,6 +418,25 @@ describe RubyRTF::Parser do
       parser.current_section[:text] = 'My code'
       parser.handle_control(:hex, '~', nil, 0)
       parser.current_section[:text].should == 'My code~'
+    end
+
+    it 'sets a unicode character < 32768 (char 2603)' do
+      parser.current_section[:text] = 'My code'
+      parser.handle_control(:u, 2603, nil, 0)
+      parser.current_section[:text].should == 'My code☃'
+    end
+
+    it 'sets a unicode character < 32768 (char 21340)' do
+      parser.current_section[:text] = 'My code'
+      parser.handle_control(:u, 21340, nil, 0)
+      parser.current_section[:text].should == 'My code卜'
+    end
+
+
+    it 'sets a unicode character > 32767 (char 36,947)' do
+      parser.current_section[:text] = 'My code'
+      parser.handle_control(:u, -28589, nil, 0)
+      parser.current_section[:text].should == 'My code道'
     end
 
     context 'new line' do
