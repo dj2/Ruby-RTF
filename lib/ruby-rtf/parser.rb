@@ -151,7 +151,7 @@ module RubyRTF
       when :hex then current_section[:text] << val
       when :u then
         char = if val > 0 && val < 10_000
-          '\u' + val.to_s
+          '\u' + ("0" * (4 - val.to_s.length)) + val.to_s
         elsif val > 0
           '\u' + ("%04x" % val)
         else

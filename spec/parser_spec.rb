@@ -420,6 +420,12 @@ describe RubyRTF::Parser do
       parser.current_section[:text].should == 'My code~'
     end
 
+    it 'sets a unicode character < 1000 (char 643)' do
+      parser.current_section[:text] = 'My code'
+      parser.handle_control(:u, 643, nil, 0)
+      parser.current_section[:text].should == 'My codeك'
+    end
+
     it 'sets a unicode character < 32768 (char 2603)' do
       parser.current_section[:text] = 'My code'
       parser.handle_control(:u, 2603, nil, 0)
