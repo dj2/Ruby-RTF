@@ -579,6 +579,15 @@ describe RubyRTF::Parser do
         parser.current_section[:modifiers][:space_after].should == 50
       end
     end
+
+    context 'non breaking space' do
+      it 'handles :~' do
+        parser.current_section[:text] = "end."
+        parser.handle_control(:~, nil, nil, 0)
+        doc.sections.last[:modifiers][:nbsp].should be_true
+        doc.sections.last[:text].should == " "
+      end
+    end
   end
 
   context 'sections' do

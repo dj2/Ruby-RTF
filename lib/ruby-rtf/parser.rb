@@ -162,6 +162,8 @@ module RubyRTF
       when :'}' then current_section[:text] << "}"
       when :'\\' then current_section[:text] << '\\'
 
+      when :~ then add_modifier_section({:nbsp => true}, " ")
+
       when :tab then add_modifier_section({:tab => true}, "\t")
       when :emdash then add_modifier_section({:emdash => true}, "--")
       when :endash then add_modifier_section({:endash => true}, "-")

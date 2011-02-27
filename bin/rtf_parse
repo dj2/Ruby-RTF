@@ -49,6 +49,9 @@ def format(str, section)
   elsif mods[:endash]
     str << "&ndash;"
     return
+  elsif mods[:nbsp]
+    str << "&nbsp;"
+    return
   end
   return if section[:text].empty?
 
