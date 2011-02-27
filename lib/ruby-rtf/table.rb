@@ -64,7 +64,7 @@ module RubyRTF
           end_pos = row.end_positions[idx]
           prev_pos = idx == 0 ? 0 : row.end_positions[idx - 1]
 
-          end_pos - prev_pos - (2 * gap) - left_margin
+          ((end_pos - prev_pos - (2 * gap) - left_margin) / row.end_positions[-1]) * 100
         end
       end
     end
