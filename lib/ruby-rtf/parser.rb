@@ -13,6 +13,8 @@ module RubyRTF
       @formatting_stack = [default_mods]
       @current_section = {:text => '', :modifiers => default_mods}
 
+      @seen = {}
+
       @doc = RubyRTF::Document.new
       @context_stack = []
     end
@@ -228,7 +230,11 @@ module RubyRTF
           @context_stack.pop
         end
 
-      else STDERR.puts "Unknown control #{name.inspect} with #{val} at #{current_pos}"
+      else
+        unless @seen[name]
+          @seen[name] = true
+          STDERR.puts "Unknown control #{name.inspect} with #{val} at #{current_pos}"
+        end
       end
       current_pos
     end
