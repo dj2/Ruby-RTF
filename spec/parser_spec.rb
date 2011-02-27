@@ -550,6 +550,23 @@ describe RubyRTF::Parser do
         parser.current_section[:modifiers][:justification].should == :center
       end
     end
+
+    context 'indenting' do
+      it 'handles first line indent' do
+        parser.handle_control(:fi, 1000, nil, 0)
+        parser.current_section[:modifiers][:first_line_indent].should == 50
+      end
+
+      it 'handles left indent' do
+        parser.handle_control(:li, 1000, nil, 0)
+        parser.current_section[:modifiers][:left_indent].should == 50
+      end
+
+      it 'handles right indent' do
+        parser.handle_control(:ri, 1000, nil, 0)
+        parser.current_section[:modifiers][:right_indent].should == 50
+      end
+    end
   end
 
   context 'sections' do
