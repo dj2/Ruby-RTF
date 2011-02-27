@@ -142,6 +142,8 @@ module RubyRTF
       when :fi then add_section!(:first_line_indent => RubyRTF.twips_to_points(val))
       when :li then add_section!(:left_indent => RubyRTF.twips_to_points(val))
       when :ri then add_section!(:right_indent => RubyRTF.twips_to_points(val))
+      when :sb then add_section!(:space_before => RubyRTF.twips_to_points(val))
+      when :sa then add_section!(:space_after => RubyRTF.twips_to_points(val))
       when :cf then add_section!(:foreground_colour => @doc.colour_table[val])
       when :cb then add_section!(:background_colour => @doc.colour_table[val])
       when :hex then current_section[:text] << val

@@ -567,6 +567,18 @@ describe RubyRTF::Parser do
         parser.current_section[:modifiers][:right_indent].should == 50
       end
     end
+
+    context 'paragraph spacing' do
+      it 'handles space before' do
+        parser.handle_control(:sb, 1000, nil, 0)
+        parser.current_section[:modifiers][:space_before].should == 50
+      end
+
+      it 'handles space after' do
+        parser.handle_control(:sa, 1000, nil, 0)
+        parser.current_section[:modifiers][:space_after].should == 50
+      end
+    end
   end
 
   context 'sections' do
