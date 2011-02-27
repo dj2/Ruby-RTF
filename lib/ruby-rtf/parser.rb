@@ -14,7 +14,7 @@ module RubyRTF
       @current_section = {:text => '', :modifiers => default_mods}
 
       @doc = RubyRTF::Document.new
-      @context_stack = [@doc]
+      @context_stack = []
     end
 
     # Parses a given string into an RubyRTF::Document
@@ -453,7 +453,7 @@ module RubyRTF
     end
 
     def current_context
-      @context_stack.last
+      @context_stack.last || doc
     end
 
     # Pop the current top element off the formatting stack.
