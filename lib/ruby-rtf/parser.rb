@@ -11,9 +11,8 @@ module RubyRTF
     attr_reader :doc
 
     def initialize
-      default_mods = {}
-      @formatting_stack = [default_mods]
-      @current_section = {:text => '', :modifiers => default_mods}
+      @formatting_stack = []
+      @current_section = {:text => '', :modifiers => {}}
 
       @seen = {}
 
@@ -130,9 +129,27 @@ module RubyRTF
 
       # RTF font sizes are in half-points. divide by 2 to get points
       when :fs then add_section!(:font_size => (val.to_f / 2.0))
-      when :b then add_section!(:bold => true)
-      when :i then add_section!(:italic => true)
+      when :b then
+        if val
+          @formatting_stack.pop
+          add_section!
+        else
+          add_section!(:bold => true)
+        end
+
+      when :i then
+        if val
+          @formatting_stack.pop
+          add_section!
+        else
+          add_section!(:italic => true)
+        end
+
       when :ul then add_section!(:underline => true)
+      when :ulnone then
+        current_section[:modifiers][:underline] = false
+        @formatting_stack.pop
+
       when :super then add_section!(:superscript => true)
       when :sub then add_section!(:subscript => true)
       when :strike then add_section!(:strikethrough => true)
@@ -461,7 +478,8 @@ module RubyRTF
     def force_section!(mods = {}, text =  nil)
       current_context << @current_section
 
-      formatting_stack.last.each_pair do |k, v|
+      fs = formatting_stack.last || {}
+      fs.each_pair do |k, v|
         next if BLACKLISTED.include?(k)
         mods[k] = v
       end
