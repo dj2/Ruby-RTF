@@ -129,6 +129,13 @@ describe RubyRTF::Parser do
       current_pos.should == 3
     end
 
+    context "encoding is windows-1252" do
+      it 'parses a hex control' do
+        parser.encoding = 'windows-1252'
+        parser.parse_control("'93")[0, 2].should == [:hex, '“']
+      end
+    end
+
     [' ', '{', '}', '\\', "\r", "\n"].each do |stop|
       it "stops at a #{stop}" do
         parser.parse_control("rtf#{stop}test")[0, 2].should == [:rtf, nil]
@@ -443,6 +450,23 @@ describe RubyRTF::Parser do
       parser.current_section[:text] = 'My code'
       parser.handle_control(:u, -28589, nil, 0)
       parser.current_section[:text].should == 'My code道'
+    end
+
+    context "uc0 skips a byte in the next unicode char" do
+      it "u8278" do
+        parser.current_section[:text] = 'My code '
+        parser.handle_control(:uc, 0, nil, 0)
+        parser.handle_control(:u, 8278, nil, 0)
+        parser.current_section[:text].should == 'My code x'
+      end
+
+      it "u8232 - does newline" do
+        parser.current_section[:text] = "end."
+        parser.handle_control(:uc, 0, nil, 0)
+        parser.handle_control(:u, 8232, nil, 0)
+        doc.sections.last[:modifiers][:newline].should be_true
+        doc.sections.last[:text].should == "\n"
+      end
     end
 
     context 'new line' do

@@ -3,7 +3,7 @@
 module RubyRTF
   # Handles the parsing of RTF content into an RubyRTF::Document
   class Parser
-    attr_accessor :current_section
+    attr_accessor :current_section, :encoding
 
     # @return [Array] The current formatting block to use as the basis for new sections
     attr_reader :formatting_stack
@@ -82,6 +82,9 @@ module RubyRTF
       # handle hex special
       if src[current_pos] == "'"
         val = src[(current_pos + 1), 2].hex.chr
+        if encoding
+          val = val.force_encoding(encoding).encode('UTF-8')
+        end
         current_pos += 3
         return [:hex, val, current_pos]
       end
@@ -118,6 +121,7 @@ module RubyRTF
       case(name)
       when :rtf then ;
       when :deff then @doc.default_font = val
+      when :ansicpg then self.encoding = "windows-#{val}"
       when *[:ansi, :mac, :pc, :pca] then @doc.character_set = name
       when :fonttbl then current_pos = parse_font_table(src, current_pos)
       when :colortbl then current_pos = parse_colour_table(src, current_pos)
@@ -170,15 +174,24 @@ module RubyRTF
       when :cf then add_section!(:foreground_colour => @doc.colour_table[val])
       when :cb then add_section!(:background_colour => @doc.colour_table[val])
       when :hex then current_section[:text] << val
+      when :uc then @skip_byte = val.to_i
       when :u then
-        char = if val > 0 && val < 10_000
-          '\u' + ("0" * (4 - val.to_s.length)) + val.to_s
-        elsif val > 0
-          '\u' + ("%04x" % val)
-        else
-          '\u' + ("%04x" % (val + 65_536))
+        if @skip_byte && @skip_byte == 0
+          val = val % 100
+          @skip_byte = nil
         end
-        current_section[:text] << eval("\"#{char}\"")
+        if val == 32
+          add_modifier_section({:newline => true}, "\n")
+        else
+          val += 65_536 if val < 0
+          char = if val < 10_000
+                   [val.to_s.hex].pack('U*')
+                 else
+                   [val].pack('U*')
+                 end
+          current_section[:text] << char
+          Rails.logger.error [ current_section[:text].encoding , char.encoding ].inspect
+        end
 
       when *[:rquote, :lquote] then add_modifier_section({name => true}, "'")
       when *[:rdblquote, :ldblquote] then add_modifier_section({name => true}, '"')
