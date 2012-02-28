@@ -180,7 +180,7 @@ module RubyRTF
           val = val % 100
           @skip_byte = nil
         end
-        if val == 32
+        if val == 32 || val == 8232
           add_modifier_section({:newline => true}, "\n")
         else
           val += 65_536 if val < 0
@@ -190,7 +190,6 @@ module RubyRTF
                    [val].pack('U*')
                  end
           current_section[:text] << char
-          Rails.logger.error [ current_section[:text].encoding , char.encoding ].inspect
         end
 
       when *[:rquote, :lquote] then add_modifier_section({name => true}, "'")
