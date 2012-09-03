@@ -174,22 +174,13 @@ module RubyRTF
       when :cf then add_section!(:foreground_colour => @doc.colour_table[val])
       when :cb then add_section!(:background_colour => @doc.colour_table[val])
       when :hex then current_section[:text] << val
-      when :uc then @skip_byte = val.to_i
+      when :uc then
+        raise "Can't deal with uc != 0 yet" if val != 0
       when :u then
-        if @skip_byte && @skip_byte == 0
-          val = val % 100
-          @skip_byte = nil
-        end
         if val == 32 || val == 8232
           add_modifier_section({:newline => true}, "\n")
         else
-          val += 65_536 if val < 0
-          char = if val < 10_000
-                   [val.to_s.hex].pack('U*')
-                 else
-                   [val].pack('U*')
-                 end
-          current_section[:text] << char
+          current_section[:text] << val.chr('utf-8')
         end
 
       when *[:rquote, :lquote] then add_modifier_section({name => true}, "'")
@@ -305,6 +296,7 @@ module RubyRTF
           group -= 1
 
           if group <= 1
+            break if font.nil?
             font.cleanup_names
             @doc.font_table[font.number] = font
           end
