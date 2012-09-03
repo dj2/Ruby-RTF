@@ -175,6 +175,13 @@ describe RubyRTF::Parser do
       font.name.should == 'Times'
     end
 
+    it 'parses an empty font table' do
+      src = "{\\rtf1\\ansi\\ansicpg1252\\cocoartf1187\n{\\fonttbl}\n{\\colortbl;\\red255\\green255\\blue255;}\n}"
+      doc = parser.parse(src)
+
+      doc.font_table.should == []
+    end
+
     context '#parse_font_table' do
       it 'parses a font table' do
         src = '{\f0\froman Times New Roman;}{\f1\fnil Arial;}}}'

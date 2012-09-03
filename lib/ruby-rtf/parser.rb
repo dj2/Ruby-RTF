@@ -305,6 +305,7 @@ module RubyRTF
           group -= 1
 
           if group <= 1
+            break if font.nil?
             font.cleanup_names
             @doc.font_table[font.number] = font
           end
