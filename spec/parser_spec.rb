@@ -437,12 +437,12 @@ describe RubyRTF::Parser do
     it 'sets a unicode character < 1000 (char 643)' do
       parser.current_section[:text] = 'My code'
       parser.handle_control(:u, 643, nil, 0)
-      parser.current_section[:text].should == 'My codeك'
+      parser.current_section[:text].should == 'My codeʃ'
     end
 
-    it 'sets a unicode character < 32768 (char 2603)' do
+    it 'sets a unicode character < 32768 (char 9731)' do
       parser.current_section[:text] = 'My code'
-      parser.handle_control(:u, 2603, nil, 0)
+      parser.handle_control(:u, 9731, nil, 0)
       parser.current_section[:text].should == 'My code☃'
     end
 
@@ -459,12 +459,12 @@ describe RubyRTF::Parser do
       parser.current_section[:text].should == 'My code道'
     end
 
-    context "uc0 skips a byte in the next unicode char" do
+    context "uc0 skips 0 bytes in the next unicode char" do
       it "u8278" do
         parser.current_section[:text] = 'My code '
         parser.handle_control(:uc, 0, nil, 0)
         parser.handle_control(:u, 8278, nil, 0)
-        parser.current_section[:text].should == 'My code x'
+        parser.current_section[:text].should == 'My code ⁖'
       end
 
       it "u8232 - does newline" do

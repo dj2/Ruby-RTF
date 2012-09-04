@@ -180,6 +180,10 @@ module RubyRTF
         if val == 32 || val == 8232
           add_modifier_section({:newline => true}, "\n")
         else
+          if val < 0
+            # RTF spec says that unicode codepoints > 32767 are expressed as negative numbers
+            val = val + 65536
+          end
           current_section[:text] << val.chr('utf-8')
         end
 
