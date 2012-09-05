@@ -11,8 +11,11 @@ module RubyRTF
     attr_reader :doc
 
     def initialize
-      @formatting_stack = []
-      @current_section = {:text => '', :modifiers => {}}
+      # default_mods needs to be the same has in the formatting stack and in
+      # the current_section modifiers or the first stack ends up getting lost.
+      default_mods = {}
+      @formatting_stack = [default_mods]
+      @current_section = {:text => '', :modifiers => default_mods}
 
       @seen = {}
 
