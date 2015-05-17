@@ -273,6 +273,15 @@ module RubyRTF
 
           @context_stack.pop
         end
+      when :pict then add_section!(picture: true)
+      when :jpegblip then add_section!(picture_format:'jpeg')
+      when :pngblip then add_section!(picture_format:'png')
+      when *[:dibitmap, :wbitmap] then add_section!(picture_format:'bmp')
+      when *[:wmetafile, :pmmetafile] then add_section!(picture_format:'wmf')
+      when :pich then add_section!(picture_height: RubyRTF.twips_to_points(val))
+      when :picw then add_section!(picture_width: RubyRTF.twips_to_points(val))
+      when :picscalex then add_section!(picture_scale_x: val.to_i)
+      when :picscaley then add_section!(picture_scale_y: val.to_i)
 
       else
         unless @seen[name]
@@ -508,7 +517,9 @@ module RubyRTF
     #
     # @return [Nil]
     def reset_current_section!
+      paragraph = current_section[:modifiers].has_key?(:paragraph)
       current_section[:modifiers].clear
+      current_section[:modifiers][:paragraph] = true if paragraph
     end
 
     def current_context

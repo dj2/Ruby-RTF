@@ -18,7 +18,6 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'metric_fu'
 
   s.add_development_dependency 'yard'
-  s.add_development_dependency 'bluecloth'
 
   s.bindir = 'bin'
   s.executables << 'rtf_parse'
