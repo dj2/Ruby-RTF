@@ -3,6 +3,7 @@
 
 require 'ruby-rtf'
 require 'pp'
+require 'base64'
 
 @prefix = ''
 @suffix = ''
@@ -80,6 +81,28 @@ def format(str, section)
   str << @prefix + section[:text].force_encoding('UTF-8') + @suffix
 end
 
+def process_image(section)
+  mods = section[:modifiers]
+  mime = ''
+  case mods[:picture_format]
+  when 'jpeg'
+    mime = 'image/jpg'
+  when 'png'
+    mime = 'image/png'
+  when 'bmp'
+    mime = 'image/bmp'
+  when 'wmf'
+    mime = 'image/x-wmf'
+  end
+  hex = section[:text].scan(/../).map(&:hex).pack('c*')
+  base64 = Base64.strict_encode64(hex)
+  width = 'auto'
+  width = mods[:picture_width] * (mods[:picture_scale_x] || 100) / 100 if mods[:picture_width]
+  height = 'auto'
+  height = mods[:picture_height] * (mods[:picture_scale_y] || 100) / 100 if mods[:picture_height]
+  "<img width='#{width}' height='#{height}' src=\"data:#{mime};base64,#{base64}\"/>\n"
+end
+
 doc = RubyRTF::Parser.new.parse(File.open(ARGV[0]).read)
 
 STDERR.puts doc
@@ -102,6 +125,9 @@ doc.sections.each do |section|
       str << "</tr>\n"
     end
     str << "</table>\n"
+    next
+  elsif mods[:picture]
+    str << process_image(section)
     next
   end
 

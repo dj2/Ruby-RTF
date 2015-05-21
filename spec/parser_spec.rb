@@ -14,7 +14,7 @@ describe RubyRTF::Parser do
   it 'returns a RTF::Document' do
     src = '{\rtf1\ansi\deff0 {\fonttbl {\f0 Times New Roman;}}\f0 \fs60 Hello, World!}'
     d = parser.parse(src)
-    d.is_a?(RubyRTF::Document).should be_true
+    expect(d.is_a?(RubyRTF::Document)).to eq(true)
   end
 
   it 'parses a default font (\deffN)' do
@@ -76,23 +76,77 @@ describe RubyRTF::Parser do
 
       section = parser.parse(src).sections
       section[0][:modifiers][:font_size].should == 30
-      section[0][:modifiers][:bold].should be_true
-      section[0][:modifiers].has_key?(:italic).should be_false
-      section[0][:modifiers].has_key?(:underline).should be_false
+      expect(section[0][:modifiers][:bold]).to eq(true)
+      expect(section[0][:modifiers].has_key?(:italic)).to eq(false)
+      expect(section[0][:modifiers].has_key?(:underline)).to eq(false)
       section[0][:text].should == 'Hello '
 
       section[1][:modifiers][:font_size].should == 15
-      section[1][:modifiers][:italic].should be_true
-      section[1][:modifiers][:bold].should be_true
-      section[1][:modifiers].has_key?(:underline).should be_false
+      expect(section[1][:modifiers][:italic]).to eq(true)
+      expect(section[1][:modifiers][:bold]).to eq(true)
+      expect(section[1][:modifiers].has_key?(:underline)).to eq(false)
       section[1][:text].should == 'World'
 
       section[2][:modifiers][:font_size].should == 30
-      section[2][:modifiers][:bold].should be_true
-      section[2][:modifiers][:underline].should be_true
-      section[2][:modifiers].has_key?(:italic).should be_false
+      expect(section[2][:modifiers][:bold]).to eq(true)
+      expect(section[2][:modifiers][:underline]).to eq(true)
+      expect(section[2][:modifiers].has_key?(:italic)).to eq(false)
       section[2][:text].should == 'Goodbye, cruel world.'
     end
+
+    context 'parses pictures' do
+
+      it 'should parse jpeg' do
+        src = '{\rtf1 {\pict\jpegblip\picw7064\pich5292\picwgoal4005\pichgoal3000\picscalex111\picscaley109
+ffd8ffe000104a4649460001010100b400b40000ffe1158a687474703a2f2f6e732e61646f62652e636f6d2f7861702f3}}'
+        section = parser.parse(src).sections
+        expect(section[0][:modifiers][:picture]).to eq(true)
+        expect(section[0][:modifiers][:picture_format]).to eq('jpeg')
+      end
+
+      it 'should parse bmp' do
+        src = '{\rtf1 {\pict\dibitmap\picw7064\pich5292\picwgoal4005\pichgoal3000\picscalex111\picscaley109
+ffd8ffe000104a4649460001010100b400b40000ffe1158a687474703a2f2f6e732e61646f62652e636f6d2f7861702f3}}'
+        section = parser.parse(src).sections
+        expect(section[0][:modifiers][:picture]).to eq(true)
+        expect(section[0][:modifiers][:picture_format]).to eq('bmp')
+        src = '{\rtf1 {\pict\wbitmap\picw7064\pich5292\picwgoal4005\pichgoal3000\picscalex111\picscaley109
+ffd8ffe000104a4649460001010100b400b40000ffe1158a687474703a2f2f6e732e61646f62652e636f6d2f7861702f3}}'
+        section = parser.parse(src).sections
+        expect(section[0][:modifiers][:picture]).to eq(true)
+        expect(section[0][:modifiers][:picture_format]).to eq('bmp')
+      end
+
+      it 'should parse width' do
+        src = '{\rtf1 {\pict\dibitmap\picw7064\pich5292\picwgoal4005\pichgoal3000\picscalex111\picscaley109
+ffd8ffe000104a4649460001010100b400b40000ffe1158a687474703a2f2f6e732e61646f62652e636f6d2f7861702f3}}'
+        section = parser.parse(src).sections
+        expect(section[0][:modifiers][:picture_width]).to eq(7064/20.0)
+      end
+
+      it 'should parse height' do
+        src = '{\rtf1 {\pict\dibitmap\picw7064\pich5292\picwgoal4005\pichgoal3000\picscalex111\picscaley109
+ffd8ffe000104a4649460001010100b400b40000ffe1158a687474703a2f2f6e732e61646f62652e636f6d2f7861702f3}}'
+        section = parser.parse(src).sections
+        expect(section[0][:modifiers][:picture_height]).to eq(5292/20.0)
+      end
+
+      it 'should parse scale' do
+        src = '{\rtf1 {\pict\dibitmap\picw7064\pich5292\picwgoal4005\pichgoal3000\picscalex111\picscaley109
+ffd8ffe000104a4649460001010100b400b40000ffe1158a687474703a2f2f6e732e61646f62652e636f6d2f7861702f3}}'
+        section = parser.parse(src).sections
+        expect(section[0][:modifiers][:picture_scale_x]).to eq(111)
+        expect(section[0][:modifiers][:picture_scale_y]).to eq(109)
+      end
+
+      it 'should parse picture data' do
+        src = '{\rtf1 {\pict\dibitmap\picw7064\pich5292\picwgoal4005\pichgoal3000\picscalex111\picscaley109
+ffd8ffe000104a4649460001010100b400b40000ffe1158a687474703a2f2f6e732e61646f62652e636f6d2f7861702f3}}'
+        section = parser.parse(src).sections
+        expect(section[0][:text]).to eq('ffd8ffe000104a4649460001010100b400b40000ffe1158a687474703a2f2f6e732e61646f62652e636f6d2f7861702f3')
+      end
+    end
+
   end
 
   context '#parse_control' do
@@ -317,7 +371,7 @@ describe RubyRTF::Parser do
       doc = parser.parse(src)
 
       clr = doc.colour_table[0]
-      clr.use_default?.should be_true
+      expect(clr.use_default?).to eq(true)
 
       clr = doc.colour_table[1]
       clr.red.should == 255
@@ -397,17 +451,17 @@ describe RubyRTF::Parser do
 
     it 'sets bold' do
       parser.handle_control(:b, nil, nil, 0)
-      parser.current_section[:modifiers][:bold].should be_true
+      expect(parser.current_section[:modifiers][:bold]).to eq(true)
     end
 
     it 'sets underline' do
       parser.handle_control(:ul, nil, nil, 0)
-      parser.current_section[:modifiers][:underline].should be_true
+      expect(parser.current_section[:modifiers][:underline]).to eq(true)
     end
 
     it 'sets italic' do
       parser.handle_control(:i, nil, nil, 0)
-      parser.current_section[:modifiers][:italic].should be_true
+      expect(parser.current_section[:modifiers][:italic]).to eq(true)
     end
 
     %w(rquote lquote).each do |quote|
@@ -415,7 +469,7 @@ describe RubyRTF::Parser do
         parser.current_section[:text] = 'My code'
         parser.handle_control(quote.to_sym, nil, nil, 0)
         doc.sections.last[:text].should == "'"
-        doc.sections.last[:modifiers][quote.to_sym].should be_true
+        expect(doc.sections.last[:modifiers][quote.to_sym]).to eq(true)
       end
     end
 
@@ -424,7 +478,7 @@ describe RubyRTF::Parser do
         parser.current_section[:text] = 'My code'
         parser.handle_control(quote.to_sym, nil, nil, 0)
         doc.sections.last[:text].should == '"'
-        doc.sections.last[:modifiers][quote.to_sym].should be_true
+        expect(doc.sections.last[:modifiers][quote.to_sym]).to eq(true)
       end
     end
 
@@ -471,7 +525,7 @@ describe RubyRTF::Parser do
         parser.current_section[:text] = "end."
         parser.handle_control(:uc, 0, nil, 0)
         parser.handle_control(:u, 8232, nil, 0)
-        doc.sections.last[:modifiers][:newline].should be_true
+        expect(doc.sections.last[:modifiers][:newline]).to eq(true)
         doc.sections.last[:text].should == "\n"
       end
     end
@@ -481,7 +535,7 @@ describe RubyRTF::Parser do
         it "sets from #{type}" do
           parser.current_section[:text] = "end."
           parser.handle_control(type.to_sym, nil, nil, 0)
-          doc.sections.last[:modifiers][:newline].should be_true
+          expect(doc.sections.last[:modifiers][:newline]).to eq(true)
           doc.sections.last[:text].should == "\n"
         end
       end
@@ -496,7 +550,7 @@ describe RubyRTF::Parser do
     it 'inserts a \tab' do
       parser.current_section[:text] = "end."
       parser.handle_control(:tab, nil, nil, 0)
-      doc.sections.last[:modifiers][:tab].should be_true
+      expect(doc.sections.last[:modifiers][:tab]).to eq(true)
       doc.sections.last[:text].should == "\t"
     end
 
@@ -504,7 +558,7 @@ describe RubyRTF::Parser do
       parser.current_section[:text] = "end."
       parser.handle_control(:super, nil, nil, 0)
 
-      parser.current_section[:modifiers][:superscript].should be_true
+      expect(parser.current_section[:modifiers][:superscript]).to eq(true)
       parser.current_section[:text].should == ""
     end
 
@@ -512,7 +566,7 @@ describe RubyRTF::Parser do
       parser.current_section[:text] = "end."
       parser.handle_control(:sub, nil, nil, 0)
 
-      parser.current_section[:modifiers][:subscript].should be_true
+      expect(parser.current_section[:modifiers][:subscript]).to eq(true)
       parser.current_section[:text].should == ""
     end
 
@@ -520,7 +574,7 @@ describe RubyRTF::Parser do
       parser.current_section[:text] = "end."
       parser.handle_control(:strike, nil, nil, 0)
 
-      parser.current_section[:modifiers][:strikethrough].should be_true
+      expect(parser.current_section[:modifiers][:strikethrough]).to eq(true)
       parser.current_section[:text].should == ""
     end
 
@@ -528,21 +582,21 @@ describe RubyRTF::Parser do
       parser.current_section[:text] = "end."
       parser.handle_control(:scaps, nil, nil, 0)
 
-      parser.current_section[:modifiers][:smallcaps].should be_true
+      expect(parser.current_section[:modifiers][:smallcaps]).to eq(true)
       parser.current_section[:text].should == ""
     end
 
     it 'inserts an \emdash' do
       parser.current_section[:text] = "end."
       parser.handle_control(:emdash, nil, nil, 0)
-      doc.sections.last[:modifiers][:emdash].should be_true
+      expect(doc.sections.last[:modifiers][:emdash]).to eq(true)
       doc.sections.last[:text].should == "--"
     end
 
     it 'inserts an \endash' do
       parser.current_section[:text] = "end."
       parser.handle_control(:endash, nil, nil, 0)
-      doc.sections.last[:modifiers][:endash].should be_true
+      expect(doc.sections.last[:modifiers][:endash]).to eq(true)
       doc.sections.last[:text].should == "-"
     end
 
@@ -568,8 +622,8 @@ describe RubyRTF::Parser do
         parser.current_section[:modifiers][:italic] = true
         parser.handle_control(type.to_sym, nil, nil, 0)
 
-        parser.current_section[:modifiers].has_key?(:bold).should be_false
-        parser.current_section[:modifiers].has_key?(:italic).should be_false
+        expect(parser.current_section[:modifiers].has_key?(:bold)).to eq(false)
+        expect(parser.current_section[:modifiers].has_key?(:italic)).to eq(false)
       end
     end
 
@@ -664,7 +718,7 @@ describe RubyRTF::Parser do
       it 'handles :~' do
         parser.current_section[:text] = "end."
         parser.handle_control(:~, nil, nil, 0)
-        doc.sections.last[:modifiers][:nbsp].should be_true
+        expect(doc.sections.last[:modifiers][:nbsp]).to eq(true)
         doc.sections.last[:text].should == " "
       end
     end
