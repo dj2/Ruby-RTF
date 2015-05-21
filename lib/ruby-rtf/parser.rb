@@ -286,7 +286,6 @@ module RubyRTF
       else
         unless @seen[name]
           @seen[name] = true
-          STDERR.puts "Unknown control #{name.inspect} with #{val} at #{current_pos}"
         end
       end
       current_pos
