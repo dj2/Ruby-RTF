@@ -152,7 +152,13 @@ module RubyRTF
           add_section!(:italic => true)
         end
 
-      when :ul then add_section!(:underline => true)
+      when :ul then
+        if val
+          @formatting_stack.pop
+          add_section!
+        else
+          add_section!(:underline => true)
+        end
       when :ulnone then
         current_section[:modifiers][:underline] = false
         @formatting_stack.pop

@@ -93,6 +93,18 @@ describe RubyRTF::Parser do
       section[2][:modifiers].has_key?(:italic).should be_false
       section[2][:text].should == 'Goodbye, cruel world.'
     end
+
+    it 'clears ul with ul0' do
+      src = '{\rtf1 \ul\b Hello\b0\ul0 World}'
+      section = parser.parse(src).sections
+      section[0][:modifiers][:bold].should be_true
+      section[0][:modifiers][:underline].should be_true
+      section[0][:text].should == 'Hello'
+
+      section[1][:modifiers].has_key?(:bold).should be_false
+      section[1][:modifiers].has_key?(:underline).should be_false
+      section[1][:text].should == 'World'
+    end
   end
 
   context '#parse_control' do
