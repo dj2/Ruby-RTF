@@ -94,6 +94,53 @@ describe RubyRTF::Parser do
       section[2][:text].should == 'Goodbye, cruel world.'
     end
 
+    context 'parses pictures' do
+      let(:src_bitmap) do
+        src = '{\rtf1 {\pict\wbitmap\picw7064\pich5292\picwgoal4005\pichgoal3000\picscalex111\picscaley109
+ffd8ffe000104a4649460001010100b400b40000ffe1158a687474703a2f2f6e732e61646f62652e636f6d2f7861702f3}}'
+      end
+      let(:src_jpeg) do
+        src = '{\rtf1 {\pict\jpegblip\picw7064\pich5292\picwgoal4005\pichgoal3000\picscalex111\picscaley109
+ffd8ffe000104a4649460001010100b400b40000ffe1158a687474703a2f2f6e732e61646f62652e636f6d2f7861702f3}}'
+      end
+
+      it 'should parse jpeg' do
+        section = parser.parse(src_jpeg).sections
+        section[0][:modifiers][:picture].should be_true
+        section[0][:modifiers][:picture_format].should == 'jpeg'
+      end
+
+      it 'should parse bmp' do
+        section = parser.parse(src_bitmap).sections
+        section[0][:modifiers][:picture].should be_true
+        section[0][:modifiers][:picture_format].should == 'bmp'
+        section = parser.parse(src_bitmap).sections
+        section[0][:modifiers][:picture].should be_true
+        section[0][:modifiers][:picture_format].should == 'bmp'
+      end
+
+      it 'should parse width' do
+        section = parser.parse(src_bitmap).sections
+        section[0][:modifiers][:picture_width].should == 7064 / 20.0
+      end
+
+      it 'should parse height' do
+        section = parser.parse(src_bitmap).sections
+        section[0][:modifiers][:picture_height].should == 5292 / 20.0
+      end
+
+      it 'should parse scale' do
+        section = parser.parse(src_bitmap).sections
+        section[0][:modifiers][:picture_scale_x].should == 111
+        section[0][:modifiers][:picture_scale_y].should == 109
+      end
+
+      it 'should parse picture data' do
+        section = parser.parse(src_bitmap).sections
+        section[0][:text].should == 'ffd8ffe000104a4649460001010100b400b40000ffe1158a687474703a2f2f6e732e61646f62652e636f6d2f7861702f3'
+      end
+    end
+
     it 'clears ul with ul0' do
       src = '{\rtf1 \ul\b Hello\b0\ul0 World}'
       section = parser.parse(src).sections
