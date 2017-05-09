@@ -13,12 +13,7 @@ Gem::Specification.new do |s|
   s.summary = 'Library for working with RTF files'
   s.description = s.summary
 
-  s.add_development_dependency 'infinity_test'
   s.add_development_dependency 'rspec', '>2.0'
-  s.add_development_dependency 'metric_fu'
-
-  s.add_development_dependency 'yard'
-  s.add_development_dependency 'bluecloth'
 
   s.bindir = 'bin'
   s.executables << 'rtf_parse'
