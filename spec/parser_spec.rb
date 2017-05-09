@@ -14,7 +14,7 @@ describe RubyRTF::Parser do
   it 'returns a RTF::Document' do
     src = '{\rtf1\ansi\deff0 {\fonttbl {\f0 Times New Roman;}}\f0 \fs60 Hello, World!}'
     d = parser.parse(src)
-    d.is_a?(RubyRTF::Document).should be_true
+    d.is_a?(RubyRTF::Document).should  == true
   end
 
   it 'parses a default font (\deffN)' do
@@ -76,21 +76,21 @@ describe RubyRTF::Parser do
 
       section = parser.parse(src).sections
       section[0][:modifiers][:font_size].should == 30
-      section[0][:modifiers][:bold].should be_true
-      section[0][:modifiers].has_key?(:italic).should be_false
-      section[0][:modifiers].has_key?(:underline).should be_false
+      section[0][:modifiers][:bold].should == true
+      section[0][:modifiers].has_key?(:italic).should == false
+      section[0][:modifiers].has_key?(:underline).should == false
       section[0][:text].should == 'Hello '
 
       section[1][:modifiers][:font_size].should == 15
-      section[1][:modifiers][:italic].should be_true
-      section[1][:modifiers][:bold].should be_true
-      section[1][:modifiers].has_key?(:underline).should be_false
+      section[1][:modifiers][:italic].should == true
+      section[1][:modifiers][:bold].should == true
+      section[1][:modifiers].has_key?(:underline).should == false
       section[1][:text].should == 'World'
 
       section[2][:modifiers][:font_size].should == 30
-      section[2][:modifiers][:bold].should be_true
-      section[2][:modifiers][:underline].should be_true
-      section[2][:modifiers].has_key?(:italic).should be_false
+      section[2][:modifiers][:bold].should == true
+      section[2][:modifiers][:underline].should == true
+      section[2][:modifiers].has_key?(:italic).should == false
       section[2][:text].should == 'Goodbye, cruel world.'
     end
 
@@ -106,16 +106,16 @@ ffd8ffe000104a4649460001010100b400b40000ffe1158a687474703a2f2f6e732e61646f62652e
 
       it 'should parse jpeg' do
         section = parser.parse(src_jpeg).sections
-        section[0][:modifiers][:picture].should be_true
+        section[0][:modifiers][:picture].should == true
         section[0][:modifiers][:picture_format].should == 'jpeg'
       end
 
       it 'should parse bmp' do
         section = parser.parse(src_bitmap).sections
-        section[0][:modifiers][:picture].should be_true
+        section[0][:modifiers][:picture].should == true
         section[0][:modifiers][:picture_format].should == 'bmp'
         section = parser.parse(src_bitmap).sections
-        section[0][:modifiers][:picture].should be_true
+        section[0][:modifiers][:picture].should == true
         section[0][:modifiers][:picture_format].should == 'bmp'
       end
 
@@ -144,12 +144,12 @@ ffd8ffe000104a4649460001010100b400b40000ffe1158a687474703a2f2f6e732e61646f62652e
     it 'clears ul with ul0' do
       src = '{\rtf1 \ul\b Hello\b0\ul0 World}'
       section = parser.parse(src).sections
-      section[0][:modifiers][:bold].should be_true
-      section[0][:modifiers][:underline].should be_true
+      section[0][:modifiers][:bold].should == true
+      section[0][:modifiers][:underline].should == true
       section[0][:text].should == 'Hello'
 
-      section[1][:modifiers].has_key?(:bold).should be_false
-      section[1][:modifiers].has_key?(:underline).should be_false
+      section[1][:modifiers].has_key?(:bold).should == false
+      section[1][:modifiers].has_key?(:underline).should == false
       section[1][:text].should == 'World'
     end
   end
@@ -376,7 +376,7 @@ ffd8ffe000104a4649460001010100b400b40000ffe1158a687474703a2f2f6e732e61646f62652e
       doc = parser.parse(src)
 
       clr = doc.colour_table[0]
-      clr.use_default?.should be_true
+      clr.use_default?.should == true
 
       clr = doc.colour_table[1]
       clr.red.should == 255
@@ -456,17 +456,17 @@ ffd8ffe000104a4649460001010100b400b40000ffe1158a687474703a2f2f6e732e61646f62652e
 
     it 'sets bold' do
       parser.handle_control(:b, nil, nil, 0)
-      parser.current_section[:modifiers][:bold].should be_true
+      parser.current_section[:modifiers][:bold].should == true
     end
 
     it 'sets underline' do
       parser.handle_control(:ul, nil, nil, 0)
-      parser.current_section[:modifiers][:underline].should be_true
+      parser.current_section[:modifiers][:underline].should == true
     end
 
     it 'sets italic' do
       parser.handle_control(:i, nil, nil, 0)
-      parser.current_section[:modifiers][:italic].should be_true
+      parser.current_section[:modifiers][:italic].should == true
     end
 
     %w(rquote lquote).each do |quote|
@@ -474,7 +474,7 @@ ffd8ffe000104a4649460001010100b400b40000ffe1158a687474703a2f2f6e732e61646f62652e
         parser.current_section[:text] = 'My code'
         parser.handle_control(quote.to_sym, nil, nil, 0)
         doc.sections.last[:text].should == "'"
-        doc.sections.last[:modifiers][quote.to_sym].should be_true
+        doc.sections.last[:modifiers][quote.to_sym].should == true
       end
     end
 
@@ -483,7 +483,7 @@ ffd8ffe000104a4649460001010100b400b40000ffe1158a687474703a2f2f6e732e61646f62652e
         parser.current_section[:text] = 'My code'
         parser.handle_control(quote.to_sym, nil, nil, 0)
         doc.sections.last[:text].should == '"'
-        doc.sections.last[:modifiers][quote.to_sym].should be_true
+        doc.sections.last[:modifiers][quote.to_sym].should == true
       end
     end
 
@@ -530,7 +530,7 @@ ffd8ffe000104a4649460001010100b400b40000ffe1158a687474703a2f2f6e732e61646f62652e
         parser.current_section[:text] = "end."
         parser.handle_control(:uc, 0, nil, 0)
         parser.handle_control(:u, 8232, nil, 0)
-        doc.sections.last[:modifiers][:newline].should be_true
+        doc.sections.last[:modifiers][:newline].should == true
         doc.sections.last[:text].should == "\n"
       end
     end
@@ -540,7 +540,7 @@ ffd8ffe000104a4649460001010100b400b40000ffe1158a687474703a2f2f6e732e61646f62652e
         it "sets from #{type}" do
           parser.current_section[:text] = "end."
           parser.handle_control(type.to_sym, nil, nil, 0)
-          doc.sections.last[:modifiers][:newline].should be_true
+          doc.sections.last[:modifiers][:newline].should == true
           doc.sections.last[:text].should == "\n"
         end
       end
@@ -555,7 +555,7 @@ ffd8ffe000104a4649460001010100b400b40000ffe1158a687474703a2f2f6e732e61646f62652e
     it 'inserts a \tab' do
       parser.current_section[:text] = "end."
       parser.handle_control(:tab, nil, nil, 0)
-      doc.sections.last[:modifiers][:tab].should be_true
+      doc.sections.last[:modifiers][:tab].should == true
       doc.sections.last[:text].should == "\t"
     end
 
@@ -563,7 +563,7 @@ ffd8ffe000104a4649460001010100b400b40000ffe1158a687474703a2f2f6e732e61646f62652e
       parser.current_section[:text] = "end."
       parser.handle_control(:super, nil, nil, 0)
 
-      parser.current_section[:modifiers][:superscript].should be_true
+      parser.current_section[:modifiers][:superscript].should == true
       parser.current_section[:text].should == ""
     end
 
@@ -571,7 +571,7 @@ ffd8ffe000104a4649460001010100b400b40000ffe1158a687474703a2f2f6e732e61646f62652e
       parser.current_section[:text] = "end."
       parser.handle_control(:sub, nil, nil, 0)
 
-      parser.current_section[:modifiers][:subscript].should be_true
+      parser.current_section[:modifiers][:subscript].should == true
       parser.current_section[:text].should == ""
     end
 
@@ -579,7 +579,7 @@ ffd8ffe000104a4649460001010100b400b40000ffe1158a687474703a2f2f6e732e61646f62652e
       parser.current_section[:text] = "end."
       parser.handle_control(:strike, nil, nil, 0)
 
-      parser.current_section[:modifiers][:strikethrough].should be_true
+      parser.current_section[:modifiers][:strikethrough].should == true
       parser.current_section[:text].should == ""
     end
 
@@ -587,21 +587,21 @@ ffd8ffe000104a4649460001010100b400b40000ffe1158a687474703a2f2f6e732e61646f62652e
       parser.current_section[:text] = "end."
       parser.handle_control(:scaps, nil, nil, 0)
 
-      parser.current_section[:modifiers][:smallcaps].should be_true
+      parser.current_section[:modifiers][:smallcaps].should == true
       parser.current_section[:text].should == ""
     end
 
     it 'inserts an \emdash' do
       parser.current_section[:text] = "end."
       parser.handle_control(:emdash, nil, nil, 0)
-      doc.sections.last[:modifiers][:emdash].should be_true
+      doc.sections.last[:modifiers][:emdash].should == true
       doc.sections.last[:text].should == "--"
     end
 
     it 'inserts an \endash' do
       parser.current_section[:text] = "end."
       parser.handle_control(:endash, nil, nil, 0)
-      doc.sections.last[:modifiers][:endash].should be_true
+      doc.sections.last[:modifiers][:endash].should == true
       doc.sections.last[:text].should == "-"
     end
 
@@ -627,8 +627,8 @@ ffd8ffe000104a4649460001010100b400b40000ffe1158a687474703a2f2f6e732e61646f62652e
         parser.current_section[:modifiers][:italic] = true
         parser.handle_control(type.to_sym, nil, nil, 0)
 
-        parser.current_section[:modifiers].has_key?(:bold).should be_false
-        parser.current_section[:modifiers].has_key?(:italic).should be_false
+        parser.current_section[:modifiers].has_key?(:bold).should == false
+        parser.current_section[:modifiers].has_key?(:italic).should == false
       end
     end
 
@@ -723,7 +723,7 @@ ffd8ffe000104a4649460001010100b400b40000ffe1158a687474703a2f2f6e732e61646f62652e
       it 'handles :~' do
         parser.current_section[:text] = "end."
         parser.handle_control(:~, nil, nil, 0)
-        doc.sections.last[:modifiers][:nbsp].should be_true
+        doc.sections.last[:modifiers][:nbsp].should == true
         doc.sections.last[:text].should == " "
       end
     end
