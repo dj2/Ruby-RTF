@@ -10,12 +10,14 @@ module RubyRTF
 
     attr_reader :doc
 
-    def initialize
+    # @param unknown_control_warning_enabled [Boolean] Whether to write unknown control directive warnings to STDERR
+    def initialize(unknown_control_warning_enabled: true)
       # default_mods needs to be the same has in the formatting stack and in
       # the current_section modifiers or the first stack ends up getting lost.
       default_mods = {}
       @formatting_stack = [default_mods]
       @current_section = {:text => '', :modifiers => default_mods}
+      @unknown_control_warning_enabled = unknown_control_warning_enabled
 
       @seen = {}
 
@@ -292,7 +294,9 @@ module RubyRTF
       else
         unless @seen[name]
           @seen[name] = true
-          STDERR.puts "Unknown control #{name.inspect} with #{val} at #{current_pos}"
+          if @unknown_control_warning_enabled
+            warn "Unknown control #{name.inspect} with #{val} at #{current_pos}"
+          end
         end
       end
       current_pos

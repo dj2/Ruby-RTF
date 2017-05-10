@@ -6,6 +6,26 @@ describe RubyRTF::Parser do
   let(:parser) { RubyRTF::Parser.new }
   let(:doc) { parser.doc }
 
+  context 'with input containing invalid control directives' do
+    let(:parser) { RubyRTF::Parser.new(unknown_control_warning_enabled: unknown_control_warning_enabled) }
+    let(:doc) { '{\rtf1\ansi\xxxxx0}' }
+
+    context 'with unknown_control_warning_enabled = false' do
+      let(:unknown_control_warning_enabled) { false }
+
+      it 'does not write anything to stderr' do
+        expect { parser.parse(doc) }.not_to output.to_stderr
+      end
+    end
+    context 'with unknown_control_warning_enabled = true' do
+      let(:unknown_control_warning_enabled) { true }
+
+      it 'writes message to stderr' do
+        expect { parser.parse(doc) }.to output("Unknown control :xxxxx with 0 at 18\n").to_stderr
+      end
+    end
+  end
+
   it 'parses hello world' do
     src = '{\rtf1\ansi\deff0 {\fonttbl {\f0 Times New Roman;}}\f0 \fs60 Hello, World!}'
     lambda { parser.parse(src) }.should_not raise_error
