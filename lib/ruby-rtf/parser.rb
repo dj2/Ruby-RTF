@@ -513,14 +513,20 @@ module RubyRTF
     def force_section!(mods = {}, text =  nil)
       current_context << @current_section
 
+      # The modifiers for the new section
+      modifiers = {}
+
       fs = formatting_stack.last || {}
       fs.each_pair do |k, v|
         next if BLACKLISTED.include?(k)
-        mods[k] = v
+        modifiers[k] = v
       end
-      formatting_stack.push(mods)
 
-      @current_section = {:text => (text || ''), :modifiers => mods}
+      modifiers.merge!(mods)
+
+      formatting_stack.push(modifiers)
+
+      @current_section = {:text => (text || ''), :modifiers => modifiers}
     end
 
     # Resets the current section to default formating
