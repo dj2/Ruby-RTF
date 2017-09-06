@@ -1,5 +1,5 @@
 # Main namespace of the RTF parser
 module RubyRTF
   # Current library version
-  VERSION = '0.0.3'
+  VERSION = '0.0.4'
 end
