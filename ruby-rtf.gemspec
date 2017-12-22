@@ -14,7 +14,7 @@ Gem::Specification.new do |s|
   s.description = s.summary
 
   s.add_development_dependency 'rspec', '>2.0'
-  s.add_development_dependency 'yard'
+  s.add_development_dependency 'yard', '~>0.9.11'
 
   s.bindir = 'bin'
   s.executables << 'rtf_parse'

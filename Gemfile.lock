@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    ruby-rtf (0.0.2)
+    ruby-rtf (0.0.4)
 
 GEM
   remote: http://rubygems.org/
@@ -20,7 +20,7 @@ GEM
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.6.0)
     rspec-support (3.6.0)
-    yard (0.9.9)
+    yard (0.9.11)
 
 PLATFORMS
   ruby
@@ -28,7 +28,7 @@ PLATFORMS
 DEPENDENCIES
   rspec (> 2.0)
   ruby-rtf!
-  yard
+  yard (~> 0.9.11)
 
 BUNDLED WITH
-   1.14.6
+   1.16.1
