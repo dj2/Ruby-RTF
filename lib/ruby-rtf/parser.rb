@@ -126,7 +126,15 @@ module RubyRTF
       case(name)
       when :rtf then ;
       when :deff then @doc.default_font = val
-      when :ansicpg then self.encoding = "windows-#{val}"
+      when :ansicpg then
+        begin
+          # Set the encoding if it's valid
+          Encoding.find("windows-#{val}")
+          self.encoding = "windows-#{val}"
+        rescue => e
+          # ignore
+        end
+
       when *[:ansi, :mac, :pc, :pca] then @doc.character_set = name
       when :fonttbl then current_pos = parse_font_table(src, current_pos)
       when :colortbl then current_pos = parse_colour_table(src, current_pos)
