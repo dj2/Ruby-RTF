@@ -391,6 +391,36 @@ ffd8ffe000104a4649460001010100b400b40000ffe1158a687474703a2f2f6e732e61646f62652e
       clr.blue.should == 255
     end
 
+    it 'ignores single space between colour sections' do
+      src = '{\rtf1{\colortbl\red0\green0\blue0; \red127\green2\blue255;}}'
+      doc = parser.parse(src)
+
+      clr = doc.colour_table[0]
+      clr.red.should == 0
+      clr.green.should == 0
+      clr.blue.should == 0
+
+      clr = doc.colour_table[1]
+      clr.red.should == 127
+      clr.green.should == 2
+      clr.blue.should == 255
+    end
+
+    it 'ignores double space between colour sections' do
+      src = '{\rtf1{\colortbl\red0\green0\blue0;  \red127\green2\blue255;}}'
+      doc = parser.parse(src)
+
+      clr = doc.colour_table[0]
+      clr.red.should == 0
+      clr.green.should == 0
+      clr.blue.should == 0
+
+      clr = doc.colour_table[1]
+      clr.red.should == 127
+      clr.green.should == 2
+      clr.blue.should == 255
+    end
+
     it 'sets the first colour if missing' do
       src = '{\rtf1{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}}'
       doc = parser.parse(src)
