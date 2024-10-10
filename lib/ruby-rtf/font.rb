@@ -1,7 +1,7 @@
 module RubyRTF
   # Holds the information for a given font
   class Font
-    # @return [Integer] The font numberb
+    # @return [Integer] The font number
     attr_accessor :number
 
     # @return [String] The font name
