@@ -350,7 +350,7 @@ module RubyRTF
           font = RubyRTF::Font.new if font.nil?
 
           case(ctrl)
-          when :f then font.number = val
+          when :f then font.number = @doc.font_table.count
           when :fprq then font.pitch = val
           when :fcharset then font.character_set = val
           when *[:flomajor, :fhimajor, :fdbmajor, :fbimajor,
