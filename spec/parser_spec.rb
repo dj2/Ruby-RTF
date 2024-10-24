@@ -172,6 +172,13 @@ ffd8ffe000104a4649460001010100b400b40000ffe1158a687474703a2f2f6e732e61646f62652e
       section[1][:modifiers].has_key?(:underline).should == false
       section[1][:text].should == 'World'
     end
+
+    it 'parses text when control matching fails' do
+      src = '{\rtf1 Hello\~{World}}'
+      section = parser.parse(src).sections
+      section[0][:text].should == 'Hello'
+      section[1][:text].should == 'World'
+    end
   end
 
   context '#parse_control' do
@@ -231,6 +238,10 @@ ffd8ffe000104a4649460001010100b400b40000ffe1158a687474703a2f2f6e732e61646f62652e
 
     it 'advances the current positon past the optional space' do
       parser.parse_control('Test ansi test', 5).last.should == 10
+    end
+
+    it 'does not fail when control matching fails' do
+      parser.parse_control('~}')[0, 2].should == ['', nil]
     end
   end
 

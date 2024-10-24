@@ -104,8 +104,8 @@ module RubyRTF
 
       contents = src[start, current_pos - start]
       m = contents.match(/([\*a-z]+)(\-?\d+)?\*?/)
-      ctrl = m[1].to_sym
-      val = m[2].to_i unless m[2].nil?
+      ctrl = m[1].to_sym unless m.nil? || m[1].nil?
+      val = m[2].to_i unless m.nil? || m[2].nil?
 
       # we advance past the optional space if present
       current_pos += 1 if src[current_pos] == ' '
